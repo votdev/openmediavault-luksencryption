@@ -208,15 +208,6 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
 	hideResetButton: true,
 	width: 450,
 
-	getFormConfig: function() {
-		return {
-			layout: {
-				type: "vbox",
-				align: "stretch"
-			}
-		};
-	},
-
 	getFormItems: function() {
 		var me = this;
 		return [{
@@ -230,19 +221,30 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
 			xtype: "passwordfield",
 			name: "oldpassphrase",
 			fieldLabel: _("Current passphrase"),
-			allowBlank: false
-		},{
-			xtype: "passwordfield",
-			name: "newpassphrase",
-			fieldLabel: _("New passphrase"),
 			allowBlank: false,
-			triggerAction: "all"
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Enter an existing, valid passphrase that unlocks the device.")
+			}]
 		},{
-			xtype: "passwordfield",
-			name: "newpassphraseconf",
-			fieldLabel: _("Confirm passphrase"),
-			allowBlank: false,
-			submitValue: false
+			xtype: "fieldset",
+			title: _("New passphrase to add to the encrypted device"),
+			defaults: {
+				labelSeparator: ""
+			},
+			items: [{
+				xtype: "passwordfield",
+				name: "newpassphrase",
+				fieldLabel: _("Passphrase"),
+				allowBlank: false,
+				triggerAction: "all"
+			},{
+				xtype: "passwordfield",
+				name: "newpassphraseconf",
+				fieldLabel: _("Confirm passphrase"),
+				allowBlank: false,
+				submitValue: false
+			}]
 		}];
 	},
 
@@ -292,15 +294,6 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
 	hideResetButton: true,
 	width: 450,
 
-	getFormConfig: function() {
-		return {
-			layout: {
-				type: "vbox",
-				align: "stretch"
-			}
-		};
-	},
-
 	getFormItems: function() {
 		var me = this;
 		return [{
@@ -314,19 +307,30 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
 			xtype: "passwordfield",
 			name: "oldpassphrase",
 			fieldLabel: _("Current passphrase"),
-			allowBlank: false
-		},{
-			xtype: "passwordfield",
-			name: "newpassphrase",
-			fieldLabel: _("New passphrase"),
 			allowBlank: false,
-			triggerAction: "all"
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Enter an existing, valid passphrase which you want to change.")
+			}]
 		},{
-			xtype: "passwordfield",
-			name: "newpassphraseconf",
-			fieldLabel: _("Confirm passphrase"),
-			allowBlank: false,
-			submitValue: false
+			xtype: "fieldset",
+			title: _("New passphrase to replace the existing one (above)"),
+			defaults: {
+				labelSeparator: ""
+			},
+			items: [{
+				xtype: "passwordfield",
+				name: "newpassphrase",
+				fieldLabel: _("Passphrase"),
+				allowBlank: false,
+				triggerAction: "all"
+			},{
+				xtype: "passwordfield",
+				name: "newpassphraseconf",
+				fieldLabel: _("Confirm passphrase"),
+				allowBlank: false,
+				submitValue: false
+			}]
 		}];
 	},
 
@@ -377,15 +381,6 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
 	hideResetButton: true,
 	width: 450,
 
-	getFormConfig: function() {
-		return {
-			layout: {
-				type: "vbox",
-				align: "stretch"
-			}
-		};
-	},
-
 	getFormItems: function() {
 		var me = this;
 		return [{
@@ -399,7 +394,11 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
 			xtype: "passwordfield",
 			name: "passphrase",
 			fieldLabel: _("Passphrase"),
-			allowBlank: false
+			allowBlank: false,
+			plugins: [{
+				ptype: "fieldinfo",
+				text: _("Enter an existing, valid passphrase which you want to remove from the encrypted device.")
+			}]
 		}];
 	},
 
