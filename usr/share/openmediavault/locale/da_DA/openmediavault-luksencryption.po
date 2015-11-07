@@ -1,0 +1,179 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# 
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: openmediavault-luksencryption\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-11-06 20:24-0600\n"
+"PO-Revision-Date: 2015-11-07 02:25+0000\n"
+"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"Language-Team: Danish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/da/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: da\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Add"
+msgstr ""
+
+msgid "Add passphrase"
+msgstr ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Change passphrase"
+msgstr ""
+
+msgid "Confirm passphrase"
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Create encrypted device"
+msgstr ""
+
+msgid "Current passphrase"
+msgstr ""
+
+msgid "Decrypted device"
+msgstr ""
+
+msgid "Delete encrypted device"
+msgstr ""
+
+msgid "Detail"
+msgstr ""
+
+msgid "Device"
+msgstr ""
+
+msgid ""
+"Do you really want to delete the encrypted device?<br/>The encryption key "
+"will be destroyed and all data will be lost."
+msgstr ""
+
+msgid ""
+"Do you really want to encrypt this device? Any existing data on it will be "
+"deleted."
+msgstr ""
+
+msgid ""
+"Do you really want to remove this passphrase? Ensure that you have another "
+"passphrase which will unlock the device."
+msgstr ""
+
+msgid "Encrypted Devices"
+msgstr ""
+
+msgid "Encrypted device details"
+msgstr ""
+
+msgid "Encryption"
+msgstr ""
+
+msgid "Encryption Management"
+msgstr ""
+
+msgid "Enter an existing, valid passphrase that unlocks the device."
+msgstr ""
+
+msgid "Enter an existing, valid passphrase which you want to change."
+msgstr ""
+
+msgid ""
+"Enter an existing, valid passphrase which you want to remove from the "
+"encrypted device."
+msgstr ""
+
+msgid "Failed to add the passphrase to the encrypted device: %s"
+msgstr ""
+
+msgid "Failed to change the passphrase for the encrypted device: %s"
+msgstr ""
+
+msgid "Failed to create encrypted device: %s"
+msgstr ""
+
+msgid "Failed to remove the encrypted device: %s"
+msgstr ""
+
+msgid "Failed to remove the passphrase from the encrypted device: %s"
+msgstr ""
+
+msgid "Keys..."
+msgstr ""
+
+msgid "LUKS container on '%s' not found"
+msgstr ""
+
+msgid "LUKS encrypted device %s [%s, %s]"
+msgstr ""
+
+msgid "Lock"
+msgstr ""
+
+msgid "New passphrase to add to the encrypted device"
+msgstr ""
+
+msgid "New passphrase to replace the existing one (above)"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "No encryption found on '%s'"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Passphrase"
+msgstr ""
+
+msgid "Passphrases don't match"
+msgstr ""
+
+msgid "Referenced"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove passphrase"
+msgstr ""
+
+msgid "Select a device ..."
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Unable to lock encrypted device: %s"
+msgstr ""
+
+msgid "Unable to unlock encrypted device: %s"
+msgstr ""
+
+msgid "Unlock"
+msgstr ""
+
+msgid "Unlock encrypted device"
+msgstr ""
+
+msgid "Unlocked"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "n/a"
+msgstr ""

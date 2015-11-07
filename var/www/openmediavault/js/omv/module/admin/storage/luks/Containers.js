@@ -1,6 +1,4 @@
 /**
- * This file is part of OpenMediaVault.
- *
  * @license   http://www.gnu.org/licenses/gpl.html GPL Version 3
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
@@ -31,6 +29,7 @@
 // require("js/omv/data/proxy/Rpc.js")
 // require("js/omv/util/Format.js")
 // require("js/omv/window/Execute.js")
+// require("js/omv/workspace/window/TextArea.js")
 
 /**
  * @class OMV.module.admin.storage.luks.container.Create
@@ -610,7 +609,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
 		},{
 			id: me.getId() + "-keys",
 			xtype: "splitbutton",
-			text: _("Keys…"),
+			text: _("Keys..."),
 			icon: "images/key.svg",
 			iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
 			disabled: true,

@@ -1,3 +1,10 @@
+openmediavault-luksencryption (1.0.2) unstable; urgency=low
+
+  * Add missing require
+  * Add start of translations
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Fri, 06 Nov 2015 20:27:30 -0600
+
 openmediavault-luksencryption (1.0.1) unstable; urgency=low
 
   * Added key add/change/remove methods.
@@ -6,7 +13,7 @@ openmediavault-luksencryption (1.0.1) unstable; urgency=low
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Fri, 06 Nov 2015 10:39:17 +0000
 
-openmediavault-luksencryption (1.0.0) UNRELEASED; urgency=low
+openmediavault-luksencryption (1.0.0) unstable; urgency=low
 
   * Initial release.
 
