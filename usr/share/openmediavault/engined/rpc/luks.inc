@@ -30,6 +30,9 @@ require_once("openmediavault/rpcservice.inc");
 require_once("openmediavault/notify.inc");
 
 class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
+
+    private $mountOnUnlock = TRUE;
+
     /**
      * Get the RPC service name.
      */
@@ -41,6 +44,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * Initialize the RPC service.
      */
     public function initialize() {
+        if(isset($GLOBALS['OMV_LUKS_MOUNT_ON_UNLOCK']))
+            $this->mountOnUnlock = boolvalEx($GLOBALS['OMV_LUKS_MOUNT_ON_UNLOCK']);
+
         $this->registerMethod("enumerateContainers");
         $this->registerMethod("getContainersList");
         $this->registerMethod("getContainerCandidates");
@@ -122,14 +128,16 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $containers = $this->callMethod("enumerateContainers", NULL, $context);
         foreach($containers as $luksk => &$luksv) {
             $used = (!$luksv['unlocked']) ? NULL : FALSE;
-            // If open, does the container contain a filesystem and is it used?
+            // If open, does the container contain a filesystem and is it known
+            // or used (i.e. a configured mntent, aka referenced in /etc/fstab)?
             if(!is_null($used)) {
-                if(FALSE !== OMVRpc::exec("FsTab", "getByFsName", array(
-                    "id" => $luksv['decrypteddevicefile']), $context)) {
+                if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
+                    array("id" => $luksv['decrypteddevicefile']), $context))) {
                         $used = TRUE;
                 }
             }
-            $luksv['_used'] = $used; // null if locked, otherwise true if used, false if not
+            // null if locked, otherwise true if used, false if not
+            $luksv['_used'] = $used;
         }
         // Filter result.
         return $this->applyFilter($containers,
@@ -261,6 +269,23 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                             $luks->getLastError()));
             }
         }
+        // If the container contains a (referenced) filesystem, then mount it
+        // (unless this automounting is disabled by the global configuration
+        // option, OMV_LUKS_MOUNT_ON_UNLOCK - see initialize() above)
+        if(TRUE === $this->mountOnUnlock) {
+            $sdluks = new OMVStorageDeviceLUKS($luks->getDecryptedDeviceFile());
+            $df = $sdluks->getDeviceFile();
+            if(FALSE !== OMVRpc::exec("FileSystemMgmt", "hasFilesystem",
+                            array("devicefile" => $df), $context)) {
+                if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
+                                array("id" => $df), $context))) {
+                    OMVRpc::exec("FileSystemMgmt", "mount",
+                        array("id" => $meObject['fsname'], "fstab" => FALSE),
+                        $context);
+                }
+            }
+        }
+
     }
 
     /**
