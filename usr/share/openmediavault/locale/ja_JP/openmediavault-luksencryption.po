@@ -3,12 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Toshihiro Kan <kansuke4649@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-06 20:24-0600\n"
-"PO-Revision-Date: 2015-11-07 02:25+0000\n"
+"POT-Creation-Date: 2015-11-10 10:37-0600\n"
+"PO-Revision-Date: 2015-11-10 16:37+0000\n"
 "Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
 "Language-Team: Japanese (Japan) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/ja_JP/)\n"
 "MIME-Version: 1.0\n"
@@ -18,43 +19,49 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Add"
-msgstr ""
+msgstr "追加"
 
 msgid "Add passphrase"
+msgstr "パスフレーズの追加"
+
+msgid "Backup header"
+msgstr ""
+
+msgid "Cancel"
 msgstr ""
 
 msgid "Change"
-msgstr ""
+msgstr "変更"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "パスフレーズの変更"
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "パスフレーズの確認"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "確認"
 
 msgid "Create"
-msgstr ""
+msgstr "作成"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "暗号化デバイスの作成"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "現在のパスフレーズ"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "デバイスの復号化"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "暗号化デバイスの削除"
 
 msgid "Detail"
-msgstr ""
+msgstr "詳細"
 
 msgid "Device"
-msgstr ""
+msgstr "デバイス"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
@@ -71,14 +78,19 @@ msgid ""
 "passphrase which will unlock the device."
 msgstr ""
 
-msgid "Encrypted Devices"
+msgid ""
+"Do you really want to write the header to the device?<br/>Replacing the "
+"header will destroy existing keyslots."
 msgstr ""
+
+msgid "Encrypted Devices"
+msgstr "暗号化済みデバイス"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "暗号化済みデバイスの詳細"
 
 msgid "Encryption"
-msgstr ""
+msgstr "暗号化"
 
 msgid "Encryption Management"
 msgstr ""
@@ -103,13 +115,22 @@ msgstr ""
 msgid "Failed to create encrypted device: %s"
 msgstr ""
 
+msgid "Failed to extract the LUKS header from "
+msgstr ""
+
 msgid "Failed to remove the encrypted device: %s"
 msgstr ""
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
 msgstr ""
 
-msgid "Keys..."
+msgid "Failed to restore the LUKS header to "
+msgstr ""
+
+msgid "Header file"
+msgstr ""
+
+msgid "Keys"
 msgstr ""
 
 msgid "LUKS container on '%s' not found"
@@ -142,6 +163,9 @@ msgstr ""
 msgid "Passphrases don't match"
 msgstr ""
 
+msgid "Recovery"
+msgstr ""
+
 msgid "Referenced"
 msgstr ""
 
@@ -149,6 +173,12 @@ msgid "Remove"
 msgstr ""
 
 msgid "Remove passphrase"
+msgstr ""
+
+msgid "Restore encrypted device header"
+msgstr ""
+
+msgid "Restore header"
 msgstr ""
 
 msgid "Select a device ..."
@@ -170,6 +200,12 @@ msgid "Unlock encrypted device"
 msgstr ""
 
 msgid "Unlocked"
+msgstr ""
+
+msgid "Upload header backup file"
+msgstr ""
+
+msgid "Uploading header backup file ..."
 msgstr ""
 
 msgid "Yes"

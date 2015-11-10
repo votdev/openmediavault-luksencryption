@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-06 20:24-0600\n"
-"PO-Revision-Date: 2015-11-07 02:25+0000\n"
+"POT-Creation-Date: 2015-11-10 10:37-0600\n"
+"PO-Revision-Date: 2015-11-10 16:37+0000\n"
 "Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
 "Language-Team: English (United Kingdom) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/en_GB/)\n"
 "MIME-Version: 1.0\n"
@@ -21,6 +21,12 @@ msgid "Add"
 msgstr ""
 
 msgid "Add passphrase"
+msgstr ""
+
+msgid "Backup header"
+msgstr ""
+
+msgid "Cancel"
 msgstr ""
 
 msgid "Change"
@@ -71,6 +77,11 @@ msgid ""
 "passphrase which will unlock the device."
 msgstr ""
 
+msgid ""
+"Do you really want to write the header to the device?<br/>Replacing the "
+"header will destroy existing keyslots."
+msgstr ""
+
 msgid "Encrypted Devices"
 msgstr ""
 
@@ -103,13 +114,22 @@ msgstr ""
 msgid "Failed to create encrypted device: %s"
 msgstr ""
 
+msgid "Failed to extract the LUKS header from "
+msgstr ""
+
 msgid "Failed to remove the encrypted device: %s"
 msgstr ""
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
 msgstr ""
 
-msgid "Keys..."
+msgid "Failed to restore the LUKS header to "
+msgstr ""
+
+msgid "Header file"
+msgstr ""
+
+msgid "Keys"
 msgstr ""
 
 msgid "LUKS container on '%s' not found"
@@ -142,6 +162,9 @@ msgstr ""
 msgid "Passphrases don't match"
 msgstr ""
 
+msgid "Recovery"
+msgstr ""
+
 msgid "Referenced"
 msgstr ""
 
@@ -149,6 +172,12 @@ msgid "Remove"
 msgstr ""
 
 msgid "Remove passphrase"
+msgstr ""
+
+msgid "Restore encrypted device header"
+msgstr ""
+
+msgid "Restore header"
 msgstr ""
 
 msgid "Select a device ..."
@@ -170,6 +199,12 @@ msgid "Unlock encrypted device"
 msgstr ""
 
 msgid "Unlocked"
+msgstr ""
+
+msgid "Upload header backup file"
+msgstr ""
+
+msgid "Uploading header backup file ..."
 msgstr ""
 
 msgid "Yes"

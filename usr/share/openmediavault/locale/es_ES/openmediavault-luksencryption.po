@@ -3,177 +3,213 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Raul Fernandez Garcia <raulfg3@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-06 20:24-0600\n"
-"PO-Revision-Date: 2015-11-07 02:25+0000\n"
+"POT-Creation-Date: 2015-11-10 10:37-0600\n"
+"PO-Revision-Date: 2015-11-10 16:37+0000\n"
 "Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
-"Language-Team: Spanish (Spain) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es_ES/)\n"
+"Language-Team: Spanish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: es_ES\n"
+"Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Add"
-msgstr ""
+msgstr "Añadir"
 
 msgid "Add passphrase"
+msgstr "Añadir contraseña"
+
+msgid "Backup header"
+msgstr ""
+
+msgid "Cancel"
 msgstr ""
 
 msgid "Change"
-msgstr ""
+msgstr "Cambiar"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "Cambiar contraseña"
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "Confirmar contraseña"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Confirmación"
 
 msgid "Create"
-msgstr ""
+msgstr "Crear"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "Crear un disco cifrado"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "Contraseña actual"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "Disco descifrado"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "Borrar disco cifrado"
 
 msgid "Detail"
-msgstr ""
+msgstr "Detalle"
 
 msgid "Device"
-msgstr ""
+msgstr "Disco"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
 "will be destroyed and all data will be lost."
-msgstr ""
+msgstr "¿Realmente desea borrar el disco cifrado? <br/>La clave de cifrado será destruida y los datos se perderán."
 
 msgid ""
 "Do you really want to encrypt this device? Any existing data on it will be "
 "deleted."
-msgstr ""
+msgstr "¿Realmente desea cifrar este disco? Todos los datos existentes en el , serán borrados."
 
 msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
 "passphrase which will unlock the device."
+msgstr "¿Realmente desea eliminar esta contraseña?, Asegurese de que existe otra contraseña con la que se pueda descifrar el disco."
+
+msgid ""
+"Do you really want to write the header to the device?<br/>Replacing the "
+"header will destroy existing keyslots."
 msgstr ""
 
 msgid "Encrypted Devices"
-msgstr ""
+msgstr "Discos Cifrados"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "Detalle de los discos cifrados"
 
 msgid "Encryption"
-msgstr ""
+msgstr "Cifrado"
 
 msgid "Encryption Management"
-msgstr ""
+msgstr "Administración del cifrado"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
-msgstr ""
+msgstr "Introduzca una contraseña válida que descifre el disco."
 
 msgid "Enter an existing, valid passphrase which you want to change."
-msgstr ""
+msgstr "Introduzca una contraseña válida y existente que desee cambiar."
 
 msgid ""
 "Enter an existing, valid passphrase which you want to remove from the "
 "encrypted device."
-msgstr ""
+msgstr "Introduzca una contraseña válida y existente que Vd. quiera eliminar del dispositivo cifrado."
 
 msgid "Failed to add the passphrase to the encrypted device: %s"
-msgstr ""
+msgstr "Error al añadir la contraseña al disco cifrado: %s"
 
 msgid "Failed to change the passphrase for the encrypted device: %s"
-msgstr ""
+msgstr "Error al cambiar la contraseña del disco cifrado: %s"
 
 msgid "Failed to create encrypted device: %s"
+msgstr "Error al crear el disco cifrado: %s"
+
+msgid "Failed to extract the LUKS header from "
 msgstr ""
 
 msgid "Failed to remove the encrypted device: %s"
-msgstr ""
+msgstr "Error al borrar el disco cifrado: %s"
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
+msgstr "Error al eliminar la contraseña del disco cifrado: %s"
+
+msgid "Failed to restore the LUKS header to "
 msgstr ""
 
-msgid "Keys..."
+msgid "Header file"
+msgstr ""
+
+msgid "Keys"
 msgstr ""
 
 msgid "LUKS container on '%s' not found"
-msgstr ""
+msgstr "Contenedor LUKS en '%s' no encontrado"
 
 msgid "LUKS encrypted device %s [%s, %s]"
-msgstr ""
+msgstr "Disco cifrado LUKS %s [%s, %s]"
 
 msgid "Lock"
-msgstr ""
+msgstr "Bloquear"
 
 msgid "New passphrase to add to the encrypted device"
-msgstr ""
+msgstr "Nueva contraseña a añadir al disco cifrado."
 
 msgid "New passphrase to replace the existing one (above)"
-msgstr ""
+msgstr "Nueva contraseña para remplazar a la existente."
 
 msgid "No"
-msgstr ""
+msgstr "No"
 
 msgid "No encryption found on '%s'"
-msgstr ""
+msgstr "No se ha encontrado cifrado alguno en '%s'"
 
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 msgid "Passphrase"
-msgstr ""
+msgstr "Contraseña"
 
 msgid "Passphrases don't match"
+msgstr "La contraseña no coincide"
+
+msgid "Recovery"
 msgstr ""
 
 msgid "Referenced"
-msgstr ""
+msgstr "Referenciado"
 
 msgid "Remove"
-msgstr ""
+msgstr "Eliminar"
 
 msgid "Remove passphrase"
+msgstr "Eliminar contraseña"
+
+msgid "Restore encrypted device header"
+msgstr ""
+
+msgid "Restore header"
 msgstr ""
 
 msgid "Select a device ..."
-msgstr ""
+msgstr "Seleccionar un Disco ..."
 
 msgid "Size"
-msgstr ""
+msgstr "Tamaño"
 
 msgid "Unable to lock encrypted device: %s"
-msgstr ""
+msgstr "Imposible de bloquear el disco cifrado: %s"
 
 msgid "Unable to unlock encrypted device: %s"
-msgstr ""
+msgstr "Imposible de desbloquear el disco cifrado: %s"
 
 msgid "Unlock"
-msgstr ""
+msgstr "Desbloquear"
 
 msgid "Unlock encrypted device"
-msgstr ""
+msgstr "Desbloquear disco cifrado"
 
 msgid "Unlocked"
+msgstr "Desbloqueado"
+
+msgid "Upload header backup file"
+msgstr ""
+
+msgid "Uploading header backup file ..."
 msgstr ""
 
 msgid "Yes"
-msgstr ""
+msgstr "Si"
 
 msgid "n/a"
-msgstr ""
+msgstr "n/d"

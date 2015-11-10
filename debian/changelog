@@ -1,4 +1,4 @@
-openmediavault-luksencryption (1.1.0) UNRELEASED; urgency=medium
+openmediavault-luksencryption (1.1.0) unstable; urgency=medium
 
   * Update dependencies (require OpenMediaVault>=2.1.19).
   * Code formatting (e.g. tabs to spaces, 4-space indent etc.).
@@ -6,7 +6,7 @@ openmediavault-luksencryption (1.1.0) UNRELEASED; urgency=medium
   * Auto-mount known filesystems when unlocking (use OMV_LUKS_MOUNT_ON_UNLOCK to disable).
   * Added header backup and restore functionality.
 
- -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Tue, 10 Nov 2015 16:07:48 +0000
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Tue, 10 Nov 2015 10:36:59 -0600
 
 openmediavault-luksencryption (1.0.2) unstable; urgency=low
 

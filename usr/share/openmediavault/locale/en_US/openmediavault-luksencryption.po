@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-06 20:24-0600\n"
-"PO-Revision-Date: 2015-11-07 02:25+0000\n"
+"POT-Creation-Date: 2015-11-10 10:37-0600\n"
+"PO-Revision-Date: 2015-11-10 16:37+0000\n"
 "Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
 "Language-Team: English (United States) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/en_US/)\n"
 "MIME-Version: 1.0\n"
@@ -22,6 +22,12 @@ msgstr "Add"
 
 msgid "Add passphrase"
 msgstr "Add passphrase"
+
+msgid "Backup header"
+msgstr "Backup header"
+
+msgid "Cancel"
+msgstr "Cancel"
 
 msgid "Change"
 msgstr "Change"
@@ -71,6 +77,11 @@ msgid ""
 "passphrase which will unlock the device."
 msgstr "Do you really want to remove this passphrase? Ensure that you have another passphrase which will unlock the device."
 
+msgid ""
+"Do you really want to write the header to the device?<br/>Replacing the "
+"header will destroy existing keyslots."
+msgstr "Do you really want to write the header to the device?<br/>Replacing the header will destroy existing keyslots."
+
 msgid "Encrypted Devices"
 msgstr "Encrypted Devices"
 
@@ -103,14 +114,23 @@ msgstr "Failed to change the passphrase for the encrypted device: %s"
 msgid "Failed to create encrypted device: %s"
 msgstr "Failed to create encrypted device: %s"
 
+msgid "Failed to extract the LUKS header from "
+msgstr "Failed to extract the LUKS header from "
+
 msgid "Failed to remove the encrypted device: %s"
 msgstr "Failed to remove the encrypted device: %s"
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
 msgstr "Failed to remove the passphrase from the encrypted device: %s"
 
-msgid "Keys..."
-msgstr "Keys..."
+msgid "Failed to restore the LUKS header to "
+msgstr "Failed to restore the LUKS header to "
+
+msgid "Header file"
+msgstr "Header file"
+
+msgid "Keys"
+msgstr "Keys"
 
 msgid "LUKS container on '%s' not found"
 msgstr "LUKS container on '%s' not found"
@@ -142,6 +162,9 @@ msgstr "Passphrase"
 msgid "Passphrases don't match"
 msgstr "Passphrases don't match"
 
+msgid "Recovery"
+msgstr "Recovery"
+
 msgid "Referenced"
 msgstr "Referenced"
 
@@ -150,6 +173,12 @@ msgstr "Remove"
 
 msgid "Remove passphrase"
 msgstr "Remove passphrase"
+
+msgid "Restore encrypted device header"
+msgstr "Restore encrypted device header"
+
+msgid "Restore header"
+msgstr "Restore header"
 
 msgid "Select a device ..."
 msgstr "Select a device ..."
@@ -171,6 +200,12 @@ msgstr "Unlock encrypted device"
 
 msgid "Unlocked"
 msgstr "Unlocked"
+
+msgid "Upload header backup file"
+msgstr "Upload header backup file"
+
+msgid "Uploading header backup file ..."
+msgstr "Uploading header backup file ..."
 
 msgid "Yes"
 msgstr "Yes"
