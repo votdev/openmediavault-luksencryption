@@ -26,62 +26,62 @@ require_once("openmediavault/error.inc");
 
 class OMVModuleLuks extends OMVModuleServiceAbstract
   implements OMVINotifyListener, OMVIModuleNotification {
-	/**
-	 * Get the module name.
-	 */
-	public function getName() {
-		return "luks";
-	}
+    /**
+     * Get the module name.
+     */
+    public function getName() {
+        return "luks";
+    }
 
-	/**
-	 * Defines the modules that if present should start before the service
-	 * provided by this module.
-	 * @return An array of modules.
-	 */
-	public function shouldStart() { return array("email"); }
+    /**
+     * Defines the modules that if present should start before the service
+     * provided by this module.
+     * @return An array of modules.
+     */
+    public function shouldStart() { return array("email"); }
 
-	/**
-	 * Generate the configuration.
-	 * @throw E_EXEC_FAILED
-	 */
-	public function applyConfig() {
+    /**
+     * Generate the configuration.
+     * @throw E_EXEC_FAILED
+     */
+    public function applyConfig() {
         $cmd = sprintf("export LANG=C; omv-mkconf %s 2>&1", $this->getName());
-		if(0 !== $this->exec($cmd, $output)) {
-			throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-			  $cmd, implode("\n", $output));
-		}
-	}
+        if(0 !== $this->exec($cmd, $output)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
+                $cmd, implode("\n", $output));
+        }
+    }
 
-	/**
-	 * Get the notification configuration.
-	 */
-	public function getNotificationConfig() {
-		return array(
-			  array(
-				  "id" => "luks",
-				  "type" => getText("Storage"),
-				  "title" => gettext("Encryption")
-			  )
-		  );
-	}
+    /**
+     * Get the notification configuration.
+     */
+    public function getNotificationConfig() {
+        return array(
+            array(
+                "id"    => "luks",
+                "type"  => getText("Storage"),
+                "title" => gettext("Encryption")
+            )
+        );
+    }
 
-	/**
-	 * Bind listeners.
-	 */
-	function bindListeners(OMVNotifyDispatcher $dispatcher) {
-		$dispatcher->addListener(
-		  OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
-		  "org.openmediavault.system.storage.luks.container",
-		  array($this, "setDirty"));
-		$dispatcher->addListener(
-		  OMV_NOTIFY_MODIFY,
-		  "org.openmediavault.system.email",
-		  array($this, "setDirty"));
-		$dispatcher->addListener(
-		  OMV_NOTIFY_MODIFY,
-		  "org.openmediavault.system.notification.notifications",
-		  array($this, "setDirty"));
-	}
+    /**
+     * Bind listeners.
+     */
+    function bindListeners(OMVNotifyDispatcher $dispatcher) {
+        $dispatcher->addListener(
+            OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
+            "org.openmediavault.system.storage.luks.container",
+            array($this, "setDirty"));
+        $dispatcher->addListener(
+            OMV_NOTIFY_MODIFY,
+            "org.openmediavault.system.email",
+            array($this, "setDirty"));
+        $dispatcher->addListener(
+            OMV_NOTIFY_MODIFY,
+            "org.openmediavault.system.notification.notifications",
+            array($this, "setDirty"));
+    }
 }
 
 // Register module.

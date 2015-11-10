@@ -1,6 +1,7 @@
 openmediavault-luksencryption (1.0.3) UNRELEASED; urgency=medium
 
   * Update dependencies (require OpenMediaVault>=2.1.19)
+  * Code formatting (e.g. tabs to spaces, 4-space indent etc.)
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Tue, 10 Nov 2015 09:51:39 +0000
 

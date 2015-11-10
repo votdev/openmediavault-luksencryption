@@ -72,8 +72,8 @@ EOF
 
 case "$1" in
 mkconf|*)
-  # Do nothing for the time being...
-  # mkconf
-  ;;
+    # Do nothing for the time being...
+    # mkconf
+    ;;
 esac
 exit 0

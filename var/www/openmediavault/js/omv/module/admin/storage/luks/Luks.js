@@ -24,10 +24,10 @@
 
 
 OMV.WorkspaceManager.registerNode({
-	id: "luks",
-	path: "/storage",
-	text: _("Encryption Management"),
-	icon16: "images/lock.png",
-	iconSvg: "images/lock.svg",
-	position: 22
+    id: "luks",
+    path: "/storage",
+    text: _("Encryption Management"),
+    icon16: "images/lock.png",
+    iconSvg: "images/lock.svg",
+    position: 22
 });
