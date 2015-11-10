@@ -27,6 +27,9 @@
 // require("js/omv/data/Store.js")
 // require("js/omv/data/Model.js")
 // require("js/omv/data/proxy/Rpc.js")
+// require("js/omv/data/Download.js")
+// require("js/omv/window/Window.js")
+// require("js/omv/form/Panel.js")
 // require("js/omv/util/Format.js")
 // require("js/omv/window/Execute.js")
 // require("js/omv/workspace/window/TextArea.js")
@@ -437,8 +440,168 @@ Ext.define("OMV.module.admin.storage.luks.container.Detail", {
     rpcService: "LuksMgmt",
     rpcGetMethod: "getContainerDetails",
     title: _("Encrypted device details"),
-    width: 580,
-    height: 480
+    width: 600,
+    height: 500
+});
+
+
+/**
+ * @class OMV.module.admin.storage.luks.container.RestoreHeader
+ * @derived OMV.window.Upload
+ * @param params An array with additional RPC method parameters. Required:
+ *      \em devicefile The device to write the header to (selected item)
+ * @param title The dialog title.
+ * @param waitMsg The displayed waiting message.
+ */
+Ext.define("OMV.module.admin.storage.luks.container.RestoreHeader", {
+    extend: "OMV.window.Window",
+    requires: [
+        "OMV.form.Panel",
+    ],
+
+    url: "upload.php",
+    title: _("Upload header backup file"),
+    waitMsg: _("Uploading header backup file ..."),
+    width: 450,
+    layout: "fit",
+    modal: true,
+    buttonAlign: "center",
+
+    constructor: function() {
+        var me = this;
+        me.callParent(arguments);
+        /**
+         * @event success
+         * Fires after the installation has been finished successful.
+         * @param this The window object.
+         * @param response The response from the form submit action.
+         */
+    },
+
+    initComponent: function() {
+        var me = this;
+        Ext.apply(me, {
+            buttons: [{
+                text: _("OK"),
+                handler: me.onOkButton,
+                scope: me
+            },{
+                text: _("Cancel"),
+                handler: me.onCancelButton,
+                scope: me
+            }],
+            items: [ me.fp = Ext.create("OMV.form.Panel", {
+                bodyPadding: "5 5 0",
+                items: [{
+                    // Dummy field to reinforce which device will be affected
+                    xtype: "textfield",
+                    name: "devicefile",
+                    fieldLabel: _("Device"),
+                    allowBlank: false,
+                    readOnly: true,
+                    value: me.params.devicefile,
+                    submitValue: false
+                },{
+                    xtype: "filefield",
+                    name: "file",
+                    fieldLabel: _("Header file"),
+                    allowBlank: false
+                }]
+            }) ]
+        });
+        me.callParent(arguments);
+    },
+
+    /**
+     * Method that is called when the 'OK' button is pressed.
+     */
+    onOkButton: function() {
+        var me = this;
+        var basicForm = me.fp.getForm();
+        if(!basicForm.isValid())
+            return;
+        OMV.MessageBox.show({
+            title: _("Restore encrypted device header"),
+            msg: _("Do you really want to write the header to the device?<br/>Replacing the header will destroy existing keyslots."),
+            icon: Ext.Msg.WARNING,
+            buttonText: {
+                yes: _("No"),
+                no: _("Yes")
+            },
+            scope: me,
+            fn: function(answer) {
+                switch(answer) {
+                case "no": // Attention, switched buttons.
+                    me.doUpload();
+                    break;
+                default:
+                    break;
+                }
+            }
+        });
+    },
+
+    doUpload: function() {
+        var me = this;
+        var basicForm = me.fp.getForm();
+        basicForm.submit({
+            url: me.url,
+            method: "POST",
+            params: {
+                service: "LuksMgmt",
+                method: "restoreContainerHeader",
+                params: !Ext.isEmpty(me.params) ? Ext.JSON.encode(
+                  me.params).htmlspecialchars() : me.params
+            },
+            waitMsg: me.waitMsg,
+            scope: me,
+            success: function(form, action) {
+                this.onUploadSuccess(form, action);
+            },
+            failure: function(form, action) {
+                this.onUploadFailure(form, action);
+            }
+        });
+    },
+
+    /**
+     * Method that is called when the 'Cancel' button is pressed.
+     */
+    onCancelButton: function() {
+        this.close();
+    },
+
+    /**
+     * Method that is called when the file upload was successful.
+     * @param form The form that requested the action.
+     * @param action The Action object which performed the operation.
+     */
+    onUploadSuccess: function(form, action) {
+        var me = this;
+        // !!! Attention !!! Fire event before window is closed,
+        // otherwise the dialog's own listener is removed before the
+        // event has been fired and the action has been executed.
+        me.fireEvent("success", me, action.result);
+        // Now close the dialog.
+        me.close();
+    },
+
+    /**
+     * Method that is called when the file upload has been failed.
+     * @param form The form that requested the action.
+     * @param action The Action object which performed the operation.
+     */
+    onUploadFailure: function(form, action) {
+        var msg = action.response.responseText;
+        try {
+            // Try to decode JSON error messages.
+            msg = Ext.JSON.decode(msg);
+        } catch(e) {
+            // Error message is plain text, e.g. error message from the
+            // web server.
+        }
+        OMV.MessageBox.error(null, msg);
+    }
 });
 
 
@@ -609,7 +772,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
         },{
             id: me.getId() + "-keys",
             xtype: "splitbutton",
-            text: _("Keys..."),
+            text: _("Keys"),
             icon: "images/key.svg",
             iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
             disabled: true,
@@ -626,6 +789,28 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                     scope: me,
           click: function(menu, item, e, eOpts) {
                         this.onKeysButton(item.value);
+          }
+                }
+            })
+        },{
+            id: me.getId() + "-header",
+            xtype: "splitbutton",
+            text: _("Recovery"),
+            icon: "images/aid.svg",
+            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
+            disabled: true,
+            handler: function() {
+                this.showMenu();
+            },
+            menu: Ext.create("Ext.menu.Menu", {
+                items: [
+                    { text: _("Backup header"),     value: "backup"  },
+                    { text: _("Restore header"),    value: "restore" }
+                ],
+                listeners: {
+                    scope: me,
+          click: function(menu, item, e, eOpts) {
+                        this.onHeaderButton(item.value);
           }
                 }
             })
@@ -651,7 +836,8 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             "unlock": true,
             "lock": true,
             "keys": true,
-            "detail": true
+            "detail": true,
+            "header": true
         };
         if (records.length <= 0) {
             tbarBtnDisabled["delete"] = true;
@@ -659,6 +845,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             tbarBtnDisabled["lock"] = true;
             tbarBtnDisabled["keys"] = true;
             tbarBtnDisabled["detail"] = true;
+            tbarBtnDisabled["header"] = true;
         } else if(records.length == 1) {
             var record = records[0];
             // Set default values.
@@ -667,6 +854,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             tbarBtnDisabled["lock"] = true;
             tbarBtnDisabled["keys"] = false;
             tbarBtnDisabled["detail"] = false;
+            tbarBtnDisabled["header"] = false;
             // Disable/enable the unlock/lock buttons depending on whether
             // the selected device is open.
             if (true === record.get("unlocked")) {
@@ -675,10 +863,12 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             } else {
                 tbarBtnDisabled["unlock"] = false;
                 tbarBtnDisabled["delete"] = false;
-                // Disable the 'Unlock' button if the device does not
+                // Disable buttons if the device does not
                 // provide a UUID.
                 if(Ext.isEmpty(record.get("uuid"))) {
                     tbarBtnDisabled["unlock"] = true;
+                    tbarBtnDisabled["header"] = true;
+                    tbarBtnDisabled["delete"] = true;
                 }
             }
             // If the device is in use, then also disable the lock
@@ -692,6 +882,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             tbarBtnDisabled["lock"] = true;
             tbarBtnDisabled["keys"] = true;
             tbarBtnDisabled["detail"] = true;
+            tbarBtnDisabled["header"] = true;
         }
         // Disable 'Delete' button if a selected device is in use or unlocked
         for (var i = 0; i < records.length; i++) {
@@ -800,6 +991,33 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
       }).show();
       break;
       }
+    },
+
+    onHeaderButton: function(action) {
+        var me = this;
+        var record = me.getSelected();
+        var uuid = record.get("uuid");
+        switch(action) {
+            case "backup":
+                OMV.Download.request("LuksMgmt",
+                                     "backupContainerHeader",
+                                     { devicefile: record.get("devicefile") }
+                                    );
+                break;
+            case "restore":
+                Ext.create("OMV.module.admin.storage.luks.container.RestoreHeader", {
+                    params: {
+                        devicefile: record.get("devicefile")
+                    },
+                    listeners: {
+                        scope: me,
+                        success: function(wnd, response) {
+                            this.doReload();
+                        }
+                    }
+                }).show();
+                break;
+        }
     },
 
     onItemDblClick: function() {

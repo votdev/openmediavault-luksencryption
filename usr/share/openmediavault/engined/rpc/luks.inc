@@ -59,6 +59,8 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->registerMethod("addContainerPassphrase");
         $this->registerMethod("changeContainerPassphrase");
         $this->registerMethod("removeContainerPassphrase");
+        $this->registerMethod("backupContainerHeader");
+        $this->registerMethod("restoreContainerHeader");
     }
 
     /**
@@ -110,6 +112,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     array. An exception will be thrown in case of an error.
      */
     function getContainersList($params, $context) {
+        global $xmlConfig;
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -606,6 +609,121 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         if (!$luks->removeKey($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Failed to remove the passphrase from the encrypted device: %s"),
+                $luks->getLastError()));
+        }
+    }
+
+    /**
+     * Backup the container header.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file of the container to modify.
+     * @param context The context of the caller.
+     * @return An array with the following keys:
+     *     \em filename Filename of the header backup being downloaded.
+     *     \em filepath Location of the temporary file.
+     *     \em unlink Whether to delete the temporary file after downloading.
+     * @throw E_MISC_FAILURE
+     * @throw E_EXEC_FAILED
+     */
+    public function backupContainerHeader($params, $context) {
+        // Validate the RPC caller context.
+        $this->validateMethodContext($context, array(
+            "role" => OMV_ROLE_ADMINISTRATOR
+        ));
+        // Validate the parameters of the RPC service method.
+        $this->validateMethodParams($params, '{
+            "type":"object",
+            "properties":{
+                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
+            }
+        }');
+        // Check if container exists.
+        $luks = new OMVLuksContainer($params['devicefile']);
+        if (FALSE === $luks->exists()) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                sprintf("No encryption found on '%s'",
+                $params['devicefile']));
+        }
+        // Extract the header to a temporary location and modify the
+        // file mode/owner to allow the WebGUI PHP backend to unlink it.
+        $tmpFilePath = sys_get_temp_dir()."/".uniqid("luksHeader");
+        $params['backupfile'] = $tmpFilePath;
+        if (!$luks->backupHeader($params)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+                gettext("Failed to extract the LUKS header from ".
+                        "the encrypted device: %s"),
+                $luks->getLastError()));
+        }
+        // Adjust header backup temporary file permissions and ownership so
+        // that the WebGUI can delete it after downloading.
+        chmod($tmpFilePath, 0600);
+        chgrp($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
+        chown($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
+        // Return values required by generic download RPC implementation.
+        return array(
+            "filename"       => "LUKS_header_".$luks->getUuid().".bak",
+            "filepath"       => $tmpFilePath,
+            "contenttype"    => "application/octet-stream",
+            "unlink"         => TRUE
+        );
+    }
+
+    /**
+     * Restore the container header.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file of the container to modify.
+     *     \em filename The original name of the file.
+     *     \em filepath The path to the uploaded file.
+     * @param context The context of the caller.
+     * @return None
+     * @throw E_MISC_DEVICE_NOT_FOUND
+     * @throw E_MISC_FAILURE
+     * @throw E_EXEC_FAILED
+     */
+    public function restoreContainerHeader($params, $context) {
+        print_r($params);
+        // Validate the RPC caller context.
+        $this->validateMethodContext($context, array(
+            "role" => OMV_ROLE_ADMINISTRATOR
+        ));
+        // Validate the parameters of the RPC service method.
+        $this->validateMethodParams($params, '{
+            "type":"object",
+            "properties":{
+                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "filename":{"type":"string"},
+                "filepath":{"type":"string"}
+            }
+        }');
+        // Get the storage device object.
+        $sd = OMVStorageDeviceFactory::get($params['devicefile']);
+        if (is_null($sd) || !$sd->exists()) {
+            throw new OMVException(OMVErrorMsg::E_MISC_DEVICE_NOT_FOUND,
+                $params['devicefile']);
+        }
+        // Get the storage device backend of the given device.
+        $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
+        if (is_null($sdb)) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
+                "No storage device backend exists for device %s",
+                $sd->getDeviceFile()));
+        }
+        // Validate the new header
+        $cmd = sprintf("export LANG=C; cryptsetup isLuks %s 2>&1",
+                        $params['filepath']);
+        @OMVUtil::exec($cmd, $output, $result);
+        if ($result !== 0) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                sprintf("%s is not a valid LUKS header backup file",
+                        $params['filename']));
+        }
+        // Write the header to the device
+        $luks = new OMVLuksContainer($params['devicefile']);
+        if (!$luks->restoreHeader($params)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+                gettext("Failed to restore the LUKS header to ".
+                        "device %s: %s"),
+                $params['devicefile'],
                 $luks->getLastError()));
         }
     }

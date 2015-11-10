@@ -442,6 +442,8 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      * Open (unlock) the container.
      * @param passphrase A passphrase that will unlock the LUKS device.
      * @return TRUE if successful, otherwise FALSE.
+     * TODO: change from using [dev]-crypt as the mapper name to the UUID of
+     *       container instead (unique, probably will be needed for crypttab)
      */
     public function open($passphrase) {
         $cmd = sprintf("export LANG=C; echo -n %s ".
@@ -544,6 +546,48 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
         $this->refresh();
         return TRUE;
     }
+
+    /**
+     * Backup the header for the container.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file representing the LUKS container.
+     *     \em backupfile The filename to write the header backup to.
+     * @return TRUE if successful, otherwise FALSE.
+     */
+    public function backupHeader($params) {
+        $cmd = sprintf("export LANG=C; cryptsetup luksHeaderBackup ".
+                        "%s --header-backup-file %s 2>&1",
+                escapeshellarg($params['devicefile']),
+                escapeshellarg($params['backupfile']));
+        @OMVUtil::exec($cmd, $output, $result);
+        if($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    /**
+     * Restore the header for the container from a backup.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file representing the LUKS container.
+     *     \em filename The original name of the header file as uploaded.
+     *     \em filepath The path to the header backup file.
+     * @return TRUE if successful, otherwise FALSE.
+     */
+    public function restoreHeader($params) {
+        $cmd = sprintf("export LANG=C; cryptsetup luksHeaderRestore -q ".
+                        "%s --header-backup-file %s 2>&1",
+                escapeshellarg($params['devicefile']),
+                escapeshellarg($params['filepath']));
+        @OMVUtil::exec($cmd, $output, $result);
+        if($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $this->refresh();
+        return TRUE;
+    }
 }
 
 
@@ -582,7 +626,7 @@ class OMVStorageDeviceLUKS extends OMVStorageDeviceDM {
      */
     public function getLuksEncryptedDeviceName($canonical = FALSE) {
         $deviceName = str_replace("/dev/", "", !$canonical ?
-                                  $this->getLuksEncryptedDeviceFile() : 
+                                  $this->getLuksEncryptedDeviceFile() :
                                   $this->getCanonicalLuksEncryptedDeviceFile());
         return $deviceName;
     }
