@@ -46,7 +46,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
     title: _("Create encrypted device"),
     okButtonText: _("OK"),
     hideResetButton: true,
-    width: 500,
+    width: 480,
     rpcService: "LuksMgmt",
     rpcSetMethod: "createContainer",
 
@@ -151,7 +151,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
     autoLoadData: false,
     hideResetButton: true,
     okButtonText: _("Unlock"),
-    width: 450,
+    width: 480,
 
     getFormConfig: function() {
         return {
@@ -205,7 +205,7 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
     autoLoadData: false,
     okButtonText: _("Add"),
     hideResetButton: true,
-    width: 450,
+    width: 480,
 
     getFormItems: function() {
         var me = this;
@@ -291,7 +291,7 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
     autoLoadData: false,
     okButtonText: _("Change"),
     hideResetButton: true,
-    width: 450,
+    width: 480,
 
     getFormItems: function() {
         var me = this;
@@ -378,7 +378,7 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
     autoLoadData: false,
     okButtonText: _("Remove"),
     hideResetButton: true,
-    width: 450,
+    width: 480,
 
     getFormItems: function() {
         var me = this;
@@ -438,7 +438,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Detail", {
     rpcGetMethod: "getContainerDetails",
     title: _("Encrypted device details"),
     width: 580,
-    height: 470
+    height: 480
 });
 
 
