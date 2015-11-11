@@ -92,9 +92,6 @@ msgstr "Detalle de los discos cifrados"
 msgid "Encryption"
 msgstr "Cifrado"
 
-msgid "Encryption Management"
-msgstr "Administración del cifrado"
-
 msgid "Enter an existing, valid passphrase that unlocks the device."
 msgstr "Introduzca una contraseña válida que descifre el disco."
 

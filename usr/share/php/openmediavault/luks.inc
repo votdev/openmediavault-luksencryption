@@ -479,7 +479,6 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     /**
      * Add a key (passphrase) to the container.
      * @param params An array containing the following fields:
-     *   \em devicefile The device file representing the LUKS container.
      *   \em oldpassphrase A passphrase that unlocks the device.
      *   \em newpassphrase The new passphrase to add.
      * @return TRUE if successful, otherwise FALSE.
@@ -491,7 +490,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
                         "| cryptsetup luksAddKey %s --key-file=- ".
                         "<(echo -n %s) 2>&1'",
                         escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($params['devicefile']),
+                        escapeshellarg($this->getDeviceFile()),
                         escapeshellarg($params['newpassphrase']));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
@@ -505,7 +504,6 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     /**
      * Change a key (passphrase) for the container.
      * @param params An array containing the following fields:
-     *   \em devicefile The device file representing the LUKS container.
      *   \em oldpassphrase The passphrase to unlock the device.
      *   \em newpassphrase The new passphrase to replace the old one with.
      * @return TRUE if successful, otherwise FALSE.
@@ -515,7 +513,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
                         "| cryptsetup luksChangeKey %s --key-file=- ".
                         "<(echo -n %s) 2>&1'",
                         escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($params['devicefile']),
+                        escapeshellarg($this->getDeviceFile()),
                         escapeshellarg($params['newpassphrase']));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
@@ -529,7 +527,6 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     /**
      * Remove a key (passphrase) from the container.
      * @param params An array containing the following fields:
-     *   \em devicefile The device file representing the LUKS container.
      *   \em passphrase The passphrase to remove.
      * @return TRUE if successful, otherwise FALSE.
      */
@@ -537,7 +534,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
         $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
                         "| cryptsetup luksRemoveKey %s --key-file=- 2>&1'",
                         escapeshellarg($params['passphrase']),
-                        escapeshellarg($params['devicefile']));
+                        escapeshellarg($this->getDeviceFile()));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -548,16 +545,37 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
+     * Test whether a key (passphrase) will open the container.
+     * @param params An array containing the following fields:
+     *   \em passphrase The passphrase to test.
+     * @return An integer from 0-7 representing which keyslot the
+     *         passphrase matched (unlocked), otherwise FALSE.
+     */
+    public function testKey($params) {
+        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                        "| cryptsetup luksOpen -v %s --test-passphrase ".
+                        "--key-file=- 2>&1'",
+                        escapeshellarg($params['passphrase']),
+                        escapeshellarg($this->getDeviceFile()));
+        @OMVUtil::exec($cmd, $output, $result);
+        if ($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $slot = explode(" ", $output[0])[2];
+        return $slot;
+    }
+
+    /**
      * Backup the header for the container.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file representing the LUKS container.
      *     \em backupfile The filename to write the header backup to.
      * @return TRUE if successful, otherwise FALSE.
      */
     public function backupHeader($params) {
         $cmd = sprintf("export LANG=C; cryptsetup luksHeaderBackup ".
                         "%s --header-backup-file %s 2>&1",
-                escapeshellarg($params['devicefile']),
+                escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($params['backupfile']));
         @OMVUtil::exec($cmd, $output, $result);
         if($result !== 0) {
@@ -570,7 +588,6 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     /**
      * Restore the header for the container from a backup.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file representing the LUKS container.
      *     \em filename The original name of the header file as uploaded.
      *     \em filepath The path to the header backup file.
      * @return TRUE if successful, otherwise FALSE.
@@ -578,7 +595,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function restoreHeader($params) {
         $cmd = sprintf("export LANG=C; cryptsetup luksHeaderRestore -q ".
                         "%s --header-backup-file %s 2>&1",
-                escapeshellarg($params['devicefile']),
+                escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($params['filepath']));
         @OMVUtil::exec($cmd, $output, $result);
         if($result !== 0) {

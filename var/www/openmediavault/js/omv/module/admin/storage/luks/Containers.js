@@ -140,21 +140,28 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
 
 
 /**
- * @class OMV.module.admin.storage.luks.container.Unlock
+ * Generic class for passphrase entry - used to either unlock
+ * a device or just test the passphrase
+ * @class OMV.module.admin.storage.luks.container.Passphrase
  * @derived OMV.workspace.window.Form
  * @param uuid The UUID of the configuration object.
  * @param devicefile The device file, e.g. /dev/sda.
  */
-Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
+Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
     extend: "OMV.workspace.window.Form",
 
     rpcService: "LuksMgmt",
-    rpcSetMethod: "openContainer",
-    title: _("Unlock encrypted device"),
+    rpcSetMethod: "openContainer", // override
+    title: _("Unlock encrypted device"), //override
     autoLoadData: false,
     hideResetButton: true,
     okButtonText: _("Unlock"),
     width: 480,
+
+    constructor: function() {
+        var me = this;
+        me.callParent(arguments);
+    },
 
     getFormConfig: function() {
         return {
@@ -173,7 +180,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.devicefile
+            value: me.params.devicefile
         },{
             xtype: "passwordfield",
             name: "passphrase",
@@ -186,7 +193,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
         var me = this;
         var params = me.callParent(arguments);
         return Ext.apply(params, {
-            devicefile: me.devicefile
+            devicefile: me.params.devicefile
         });
     }
 });
@@ -500,12 +507,30 @@ Ext.define("OMV.module.admin.storage.luks.container.RestoreHeader", {
                     allowBlank: false,
                     readOnly: true,
                     value: me.params.devicefile,
-                    submitValue: false
+                    submitValue: false  // Don't submit as upload.php will baulk
+                },{
+                    // Dummy field to reinforce which device will be affected,
+                    // and help the user select the right backup file
+                    xtype: "textfield",
+                    name: "uuid",
+                    fieldLabel: _("UUID"),
+                    allowBlank: false,
+                    readOnly: true,
+                    value: me.params.uuid,
+                    submitValue: false  // Don't submit as upload.php will baulk
                 },{
                     xtype: "filefield",
                     name: "file",
                     fieldLabel: _("Header file"),
                     allowBlank: false
+                },{
+                    // Force overwriting the header when the UUIDs don't match
+                    xtype: "checkbox",
+                    name: "force",
+                    fieldLabel: _("Force"),
+                    checked: false,
+                    boxLabel: _("Overwrite the header even if the UUID from the backup doesn't match the device."),
+                    submitValue: false  // Don't submit as upload.php will baulk
                 }]
             }) ]
         });
@@ -544,6 +569,7 @@ Ext.define("OMV.module.admin.storage.luks.container.RestoreHeader", {
     doUpload: function() {
         var me = this;
         var basicForm = me.fp.getForm();
+        me.params.force = me.fp.findField("force").value;
         basicForm.submit({
             url: me.url,
             method: "POST",
@@ -596,11 +622,24 @@ Ext.define("OMV.module.admin.storage.luks.container.RestoreHeader", {
         try {
             // Try to decode JSON error messages.
             msg = Ext.JSON.decode(msg);
+            // Format the message text for line breaks.
+            msg.message = this.nl2br(msg.message);
         } catch(e) {
             // Error message is plain text, e.g. error message from the
             // web server.
         }
         OMV.MessageBox.error(null, msg);
+    },
+
+    /**
+     * Helper function to insert line breaks back into the error message
+     * @param str The message to process for line breaks.
+     * @param is_xhtml Boolean, whether to insert XHTML-compatible <br/>
+     *                 tags or not (default is true).
+     */
+    nl2br: function(str, is_xhtml) {
+        var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
+        return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
     }
 });
 
@@ -781,9 +820,10 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             },
             menu: Ext.create("Ext.menu.Menu", {
                 items: [
-                    { text: _("Add"),       value: "add"        },
+                    { text: _("Add"),       value: "add"    },
                     { text: _("Change"),    value: "change" },
-                    { text: _("Remove"),    value: "remove" }
+                    { text: _("Remove"),    value: "remove" },
+                    { text: _("Test"),      value: "test"   }
                 ],
                 listeners: {
                     scope: me,
@@ -914,9 +954,13 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     onUnlockButton: function() {
         var me = this;
         var record = me.getSelected();
-        Ext.create("OMV.module.admin.storage.luks.container.Unlock", {
-            uuid: record.get("uuid"),
-            devicefile: record.get("devicefile"),
+        Ext.create("OMV.module.admin.storage.luks.container.Passphrase", {
+            title:      _("Unlock encrypted device"),
+            rpcMethod:  "openContainer",
+            params: {
+                uuid:       record.get("uuid"),
+                devicefile: record.get("devicefile")
+            },
             listeners: {
                 scope: me,
                 submit: function() {
@@ -948,49 +992,69 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     },
 
     onKeysButton: function(action) {
-      var me = this;
+        var me = this;
         var record = me.getSelected();
-      switch(action) {
-      case "add":
-      Ext.create("OMV.module.admin.storage.luks.container.AddPassphrase", {
-          title: _("Add passphrase"),
-          uuid: record.get("uuid"),
-          devicefile: record.get("devicefile"),
-          listeners: {
-            scope: me,
-            submit: function() {
-                    this.doReload();
-            }
-          }
-      }).show();
-      break;
-      case "change":
-      Ext.create("OMV.module.admin.storage.luks.container.ChangePassphrase", {
-          title: _("Change passphrase"),
-          uuid: record.get("uuid"),
-          devicefile: record.get("devicefile"),
-          listeners: {
-            scope: me,
-            submit: function() {
-                    this.doReload();
-            }
-          }
-      }).show();
-      break;
-        case "remove":
-      Ext.create("OMV.module.admin.storage.luks.container.RemovePassphrase", {
-          title: _("Remove passphrase"),
-          uuid: record.get("uuid"),
-          devicefile: record.get("devicefile"),
-          listeners: {
-            scope: me,
-            submit: function() {
-                    this.doReload();
-            }
-          }
-      }).show();
-      break;
-      }
+        switch(action) {
+            case "add":
+                Ext.create("OMV.module.admin.storage.luks.container.AddPassphrase", {
+                    uuid: record.get("uuid"),
+                    devicefile: record.get("devicefile"),
+                    listeners: {
+                        scope: me,
+                        submit: function() {
+                            this.doReload();
+                        }
+                    }
+                }).show();
+            break;
+            case "change":
+                Ext.create("OMV.module.admin.storage.luks.container.ChangePassphrase", {
+                    uuid: record.get("uuid"),
+                    devicefile: record.get("devicefile"),
+                    listeners: {
+                        scope: me,
+                        submit: function() {
+                            this.doReload();
+                        }
+                    }
+                }).show();
+            break;
+            case "remove":
+                Ext.create("OMV.module.admin.storage.luks.container.RemovePassphrase", {
+                    uuid: record.get("uuid"),
+                    devicefile: record.get("devicefile"),
+                    listeners: {
+                        scope: me,
+                        submit: function() {
+                            this.doReload();
+                        }
+                    }
+                }).show();
+            break;
+            case "test":
+                Ext.create("OMV.module.admin.storage.luks.container.Passphrase", {
+                    title:          _("Test passphrase"),
+                    rpcSetMethod:   "testContainerPassphrase",
+                    params: {
+                        uuid:       record.get("uuid"),
+                        devicefile: record.get("devicefile")
+                    },
+                    listeners: {
+                        scope: me,
+                        submit: function(wnd, response, keyslot) {
+                            OMV.MessageBox.show({
+                                title: _("Success"),
+                                msg: _("The passphrase successfully unlocked keyslot ") + keyslot,
+                                buttons: Ext.Msg.OK,
+                                scope: me,
+                                icon: Ext.Msg.INFO
+                            });
+                            this.doReload();
+                        },
+                    }
+                }).show();
+            break;
+        }
     },
 
     onHeaderButton: function(action) {
@@ -1007,7 +1071,8 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             case "restore":
                 Ext.create("OMV.module.admin.storage.luks.container.RestoreHeader", {
                     params: {
-                        devicefile: record.get("devicefile")
+                        devicefile: record.get("devicefile"),
+                        uuid:       record.get("uuid")
                     },
                     listeners: {
                         scope: me,

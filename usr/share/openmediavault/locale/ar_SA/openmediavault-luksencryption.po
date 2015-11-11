@@ -91,9 +91,6 @@ msgstr ""
 msgid "Encryption"
 msgstr ""
 
-msgid "Encryption Management"
-msgstr ""
-
 msgid "Enter an existing, valid passphrase that unlocks the device."
 msgstr ""
 

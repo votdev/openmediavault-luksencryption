@@ -59,6 +59,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->registerMethod("addContainerPassphrase");
         $this->registerMethod("changeContainerPassphrase");
         $this->registerMethod("removeContainerPassphrase");
+        $this->registerMethod("testContainerPassphrase");
         $this->registerMethod("backupContainerHeader");
         $this->registerMethod("restoreContainerHeader");
     }
@@ -614,6 +615,46 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     }
 
     /**
+     * Test whether a passphrase unlocks a container.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file of the container to modify.
+     *     \em passphrase The passphrase to remove from the device.
+     * @param context The context of the caller.
+     * @return An integer from 0-7 representing which keyslot the
+     *          passphrase successfully unlocked, otherwise none.
+     * @throw E_MISC_FAILURE
+     * @throw E_EXEC_FAILED
+     */
+    public function testContainerPassphrase($params, $context) {
+        // Validate the RPC caller context.
+        $this->validateMethodContext($context, array(
+            "role" => OMV_ROLE_ADMINISTRATOR
+        ));
+        // Validate the parameters of the RPC service method.
+        $this->validateMethodParams($params, '{
+            "type":"object",
+            "properties":{
+                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":{"type":"string"}
+            }
+        }');
+        // Check if container exists.
+        $luks = new OMVLuksContainer($params['devicefile']);
+        if (FALSE === $luks->exists()) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+              sprintf("No encryption found on '%s'",
+                        $params['devicefile']));
+        }
+        // Test passphrase.
+        if (FALSE === ($slot = $luks->testKey($params))) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+              sprintf("The passphrase did not unlock any keyslot on the device"));
+        } else {
+            return $slot;
+        }
+    }
+
+    /**
      * Backup the container header.
      * @param params An array containing the following fields:
      *     \em devicefile The device file of the container to modify.
@@ -672,6 +713,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * Restore the container header.
      * @param params An array containing the following fields:
      *     \em devicefile The device file of the container to modify.
+     *     \em uuid The existing UUID of the encrypted device.
+     *     \em force Boolean, whether to proceed even if the UUID from
+     *          the backup doesn't match that on the device.
      *     \em filename The original name of the file.
      *     \em filepath The path to the uploaded file.
      * @param context The context of the caller.
@@ -690,9 +734,11 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "filename":{"type":"string"},
-                "filepath":{"type":"string"}
+                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "force":        {"type":"boolean"},
+                "filename":     {"type":"string"},
+                "filepath":     {"type":"string"}
             }
         }');
         // Get the storage device object.
@@ -716,6 +762,26 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
                 sprintf("%s is not a valid LUKS header backup file",
                         $params['filename']));
+        }
+        // Check the UUIDs match, unless force is set
+        if($params['force'] === FALSE) {
+            unset($cmd, $output, $result);
+            $cmd = sprintf("export LANG=C; cryptsetup luksUUID %s 2>&1",
+                            $params['filepath']);
+            @OMVUtil::exec($cmd, $output, $result);
+            $header_uuid = $output[0];
+            if($header_uuid !== $params['uuid']) {
+                throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                    sprintf("The UUID of the LUKS header backup file doesn't ".
+                            "match the device. If you are sure you want to ".
+                            "write this header to the device, try again with ".
+                            "the 'force' option enabled.".PHP_EOL.
+                            "Target device UUID:".PHP_EOL." %s".PHP_EOL.
+                            "Header backup UUID:".PHP_EOL." %s",
+                            $params['uuid'],
+                            $header_uuid
+                           ));
+            }
         }
         // Write the header to the device
         $luks = new OMVLuksContainer($params['devicefile']);

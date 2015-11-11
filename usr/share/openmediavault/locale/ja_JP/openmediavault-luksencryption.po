@@ -92,9 +92,6 @@ msgstr "暗号化済みデバイスの詳細"
 msgid "Encryption"
 msgstr "暗号化"
 
-msgid "Encryption Management"
-msgstr ""
-
 msgid "Enter an existing, valid passphrase that unlocks the device."
 msgstr ""
 
