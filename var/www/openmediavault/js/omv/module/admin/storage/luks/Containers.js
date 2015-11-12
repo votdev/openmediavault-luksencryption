@@ -833,12 +833,27 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 this.showMenu();
             },
             menu: Ext.create("Ext.menu.Menu", {
-                items: [
-                    { text: _("Add"),       value: "add"    },
-                    { text: _("Change"),    value: "change" },
-                    { text: _("Remove"),    value: "remove" },
-                    { text: _("Test"),      value: "test"   }
-                ],
+                items: [{
+                            text: _("Add"),
+                            value: "add",
+                            icon: "images/add.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        },{
+                            text: _("Change"),
+                            value: "change",
+                            icon: "images/edit.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        },{
+                            text: _("Remove"),
+                            value: "remove",
+                            icon: "images/minus.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        },{
+                            text: _("Test"),
+                            value: "test",
+                            icon: "images/info.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        }],
                 listeners: {
                     scope: me,
           click: function(menu, item, e, eOpts) {
@@ -857,10 +872,17 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 this.showMenu();
             },
             menu: Ext.create("Ext.menu.Menu", {
-                items: [
-                    { text: _("Backup header"),     value: "backup"  },
-                    { text: _("Restore header"),    value: "restore" }
-                ],
+                items: [{
+                            text: _("Backup header"),
+                            value: "backup",
+                            icon: "images/download.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        },{
+                            text: _("Restore header"),
+                            value: "restore",
+                            icon: "images/upload.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        }],
                 listeners: {
                     scope: me,
           click: function(menu, item, e, eOpts) {
