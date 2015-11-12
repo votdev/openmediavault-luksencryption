@@ -94,7 +94,8 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "uuid"                  => $luks->getUuid(),
                 "size"                  => $luks->getSize(),
                 "unlocked"              => $luks->isOpen(),
-                "decrypteddevicefile"   => $luks->getDecryptedDeviceFile()
+                "decrypteddevicefile"   => $luks->getDecryptedDeviceFile(),
+                "usedslots"             => $luks->getUsedKeySlots()
             );
         }
         return $result;

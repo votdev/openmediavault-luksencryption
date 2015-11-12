@@ -734,6 +734,14 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 }
                 return value;
             }
+        },{
+            text: _("Keyslots in use"),
+            sortable: true,
+            dataIndex: "usedslots",
+            stateId: "usedslots",
+            renderer: function(value) {
+                return value + "/8";
+            }
         }],
 
     initComponent: function() {
