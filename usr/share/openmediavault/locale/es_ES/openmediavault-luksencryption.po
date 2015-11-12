@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-10 10:37-0600\n"
-"PO-Revision-Date: 2015-11-10 16:37+0000\n"
+"POT-Creation-Date: 2015-11-12 13:04-0600\n"
+"PO-Revision-Date: 2015-11-12 19:04+0000\n"
 "Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es/)\n"
 "MIME-Version: 1.0\n"
@@ -18,6 +18,9 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "%s is not a valid LUKS header backup file"
+msgstr ""
+
 msgid "Add"
 msgstr "Añadir"
 
@@ -25,16 +28,19 @@ msgid "Add passphrase"
 msgstr "Añadir contraseña"
 
 msgid "Backup header"
-msgstr ""
+msgstr "Salvar cabecera"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 msgid "Change"
 msgstr "Cambiar"
 
 msgid "Change passphrase"
 msgstr "Cambiar contraseña"
+
+msgid "Choose a slot to kill ..."
+msgstr ""
 
 msgid "Confirm passphrase"
 msgstr "Confirmar contraseña"
@@ -74,13 +80,18 @@ msgid ""
 msgstr "¿Realmente desea cifrar este disco? Todos los datos existentes en el , serán borrados."
 
 msgid ""
+"Do you really want to kill this key slot? Ensure that you have another key "
+"which will unlock the device."
+msgstr ""
+
+msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
 "passphrase which will unlock the device."
 msgstr "¿Realmente desea eliminar esta contraseña?, Asegurese de que existe otra contraseña con la que se pueda descifrar el disco."
 
 msgid ""
 "Do you really want to write the header to the device?<br/>Replacing the "
-"header will destroy existing keyslots."
+"header will destroy existing key slots."
 msgstr ""
 
 msgid "Encrypted Devices"
@@ -113,6 +124,15 @@ msgid "Failed to create encrypted device: %s"
 msgstr "Error al crear el disco cifrado: %s"
 
 msgid "Failed to extract the LUKS header from "
+msgstr "Error al extraer las cabeceras LUKS"
+
+msgid "Failed to get list of devices"
+msgstr ""
+
+msgid "Failed to get list of encrypted devices"
+msgstr ""
+
+msgid "Failed to kill the key slot on the encrypted device: %s"
 msgstr ""
 
 msgid "Failed to remove the encrypted device: %s"
@@ -122,12 +142,30 @@ msgid "Failed to remove the passphrase from the encrypted device: %s"
 msgstr "Error al eliminar la contraseña del disco cifrado: %s"
 
 msgid "Failed to restore the LUKS header to "
+msgstr "Error al restaurar las cabeceras LUKS"
+
+msgid "Force"
 msgstr ""
 
 msgid "Header file"
+msgstr "Archivo con las cabeceras"
+
+msgid "Key slot"
+msgstr ""
+
+msgid "Key slots in use"
 msgstr ""
 
 msgid "Keys"
+msgstr "Contraseñas"
+
+msgid "Kill"
+msgstr ""
+
+msgid "Kill key slot"
+msgstr ""
+
+msgid "Kill slot"
 msgstr ""
 
 msgid "LUKS container on '%s' not found"
@@ -138,6 +176,9 @@ msgstr "Disco cifrado LUKS %s [%s, %s]"
 
 msgid "Lock"
 msgstr "Bloquear"
+
+msgid "Locking device ..."
+msgstr ""
 
 msgid "New passphrase to add to the encrypted device"
 msgstr "Nueva contraseña a añadir al disco cifrado."
@@ -151,8 +192,16 @@ msgstr "No"
 msgid "No encryption found on '%s'"
 msgstr "No se ha encontrado cifrado alguno en '%s'"
 
+msgid "No storage device backend exists for device %s"
+msgstr ""
+
 msgid "OK"
 msgstr "OK"
+
+msgid ""
+"Overwrite the header even if the UUID from the backup doesn't match the "
+"device."
+msgstr ""
 
 msgid "Passphrase"
 msgstr "Contraseña"
@@ -161,7 +210,7 @@ msgid "Passphrases don't match"
 msgstr "La contraseña no coincide"
 
 msgid "Recovery"
-msgstr ""
+msgstr "Recuperación"
 
 msgid "Referenced"
 msgstr "Referenciado"
@@ -173,16 +222,42 @@ msgid "Remove passphrase"
 msgstr "Eliminar contraseña"
 
 msgid "Restore encrypted device header"
-msgstr ""
+msgstr "Recuperar la cabecera del disco cifrado"
 
 msgid "Restore header"
-msgstr ""
+msgstr "Recuperar cabecera"
 
 msgid "Select a device ..."
 msgstr "Seleccionar un Disco ..."
 
 msgid "Size"
 msgstr "Tamaño"
+
+msgid "Success"
+msgstr ""
+
+msgid "Test"
+msgstr ""
+
+msgid "Test passphrase"
+msgstr ""
+
+msgid "The UUID of the LUKS header backup file "
+msgstr ""
+
+msgid ""
+"The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
+"find out which slot you want to destroy."
+msgstr ""
+
+msgid "The passphrase did not unlock any key slot on the device"
+msgstr ""
+
+msgid "The passphrase successfully unlocked key slot "
+msgstr ""
+
+msgid "UUID"
+msgstr ""
 
 msgid "Unable to lock encrypted device: %s"
 msgstr "Imposible de bloquear el disco cifrado: %s"
@@ -199,11 +274,14 @@ msgstr "Desbloquear disco cifrado"
 msgid "Unlocked"
 msgstr "Desbloqueado"
 
-msgid "Upload header backup file"
+msgid "Unlocking ..."
 msgstr ""
 
+msgid "Upload header backup file"
+msgstr "Subir el archivo de backup d ela cabecera"
+
 msgid "Uploading header backup file ..."
-msgstr ""
+msgstr "Subiendo el archivo de backup de las cabeceras ...."
 
 msgid "Yes"
 msgstr "Si"
