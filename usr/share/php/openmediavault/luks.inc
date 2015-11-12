@@ -469,7 +469,10 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
                         escapeshellarg($this->getDecryptedName()));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
-            $this->setLastError($output);
+            // Just report the last line of the output to avoid, e.g. repeated
+            // 'device-mapper: remove ioctl failed: Device or resource busy'
+            // messages. The last line says, e.g. 'Device is still in use'.
+            $this->setLastError(end($output));
             return FALSE;
         }
         $this->refresh();

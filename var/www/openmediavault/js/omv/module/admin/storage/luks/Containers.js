@@ -1093,13 +1093,21 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
         var me = this;
         var record = me.getSelected();
         var df = record.get("devicefile");
+        // Display waiting dialog
+        OMV.MessageBox.wait(null, _("Locking device ..."));
         // Execute RPC.
         OMV.Rpc.request({
             scope: me,
             callback: function(df, success, response) {
-                this.doReload();
+                OMV.MessageBox.updateProgress(1);
+                OMV.MessageBox.hide();
+                if (success) {
+                    this.doReload();
+                } else {
+                  OMV.MessageBox.error(null, response);
+                }
             },
-            relayErrors: false,
+            relayErrors: true,
             rpcData: {
                 service: "LuksMgmt",
                 method: "closeContainer",
