@@ -156,6 +156,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
     autoLoadData: false,
     hideResetButton: true,
     okButtonText: _("Unlock"),
+    submitMsg: _("Unlocking ..."),
     width: 480,
 
     constructor: function() {
@@ -657,7 +658,12 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     ],
     uses: [
         "OMV.module.admin.storage.luks.container.Create",
-        "OMV.module.admin.storage.luks.container.Detail"
+        "OMV.module.admin.storage.luks.container.Detail",
+        "OMV.module.admin.storage.luks.container.Passphrase",
+        "OMV.module.admin.storage.luks.container.AddPassphrase",
+        "OMV.module.admin.storage.luks.container.ChangePassphrase",
+        "OMV.module.admin.storage.luks.container.RemovePassphrase",
+        "OMV.module.admin.storage.luks.container.RestoreHeader"
     ],
 
     autoReload: true,
