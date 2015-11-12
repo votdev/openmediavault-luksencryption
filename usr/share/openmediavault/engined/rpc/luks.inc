@@ -82,7 +82,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Enumerate all LUKS containers on the system.
         if (FALSE === ($devs = OMVLuksContainers::enumerate())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                "Failed to get list of encrypted devices");
+                gettext("Failed to get list of encrypted devices"));
         }
         $result = array();
         foreach($devs as $devk => $devv) {
@@ -171,7 +171,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Get a list of all potential usable devices.
         if (FALSE === ($devs = OMVStorageDevices::enumerateUnused())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                "Failed to get list of devices");
+                gettext("Failed to get list of devices"));
         }
         // Prepare the result list.
         $result = array();
@@ -484,7 +484,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf("No encryption found on '%s'",
+                sprintf(gettext("No encryption found on '%s'"),
                 $params['devicefile']));
         }
         // Set the unlock at boot status
@@ -527,7 +527,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("No encryption found on '%s'",
+              sprintf(gettext("No encryption found on '%s'"),
                         $params['devicefile']));
         }
         // Change passphrase.
@@ -567,7 +567,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf("No encryption found on '%s'",
+                sprintf(gettext("No encryption found on '%s'"),
                         $params['devicefile']));
         }
         // Change passphrase.
@@ -605,7 +605,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("No encryption found on '%s'",
+              sprintf(gettext("No encryption found on '%s'"),
                         $params['devicefile']));
         }
         // Change passphrase.
@@ -644,13 +644,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("No encryption found on '%s'",
+              sprintf(gettext("No encryption found on '%s'"),
                         $params['devicefile']));
         }
         // Test passphrase.
         if (FALSE === ($slot = $luks->testKey($params))) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("The passphrase did not unlock any key slot on the device"));
+              sprintf(gettext("The passphrase did not unlock any key slot on the device")));
         } else {
             return $slot;
         }
@@ -724,7 +724,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (FALSE === $luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf("No encryption found on '%s'",
+                sprintf(gettext("No encryption found on '%s'"),
                 $params['devicefile']));
         }
         // Extract the header to a temporary location and modify the
@@ -793,7 +793,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
-                "No storage device backend exists for device %s",
+                gettext("No storage device backend exists for device %s"),
                 $sd->getDeviceFile()));
         }
         // Validate the new header
@@ -802,7 +802,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf("%s is not a valid LUKS header backup file",
+                sprintf(gettext("%s is not a valid LUKS header backup file"),
                         $params['filename']));
         }
         // Check the UUIDs match, unless force is set
@@ -814,12 +814,12 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             $header_uuid = $output[0];
             if($header_uuid !== $params['uuid']) {
                 throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                    sprintf("The UUID of the LUKS header backup file doesn't ".
-                            "match the device. If you are sure you want to ".
-                            "write this header to the device, try again with ".
-                            "the 'force' option enabled.".PHP_EOL.
+                    sprintf(gettext("The UUID of the LUKS header backup file ".
+                            "doesn't match the device. If you are sure you ".
+                            "want to write this header to the device, try ".
+                            "again with the 'force' option enabled.".PHP_EOL.
                             "Target device UUID:".PHP_EOL." %s".PHP_EOL.
-                            "Header backup UUID:".PHP_EOL." %s",
+                            "Header backup UUID:".PHP_EOL." %s"),
                             $params['uuid'],
                             $header_uuid
                            ));

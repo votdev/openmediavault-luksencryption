@@ -478,6 +478,7 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
             xtype: "numberfield",
             name: "keyslot",
             fieldLabel: _("Key slot"),
+            emptyText: _("Choose a slot to kill ..."),
             minValue: 0,
             maxValue: 7,
             allowDecimals: false,
