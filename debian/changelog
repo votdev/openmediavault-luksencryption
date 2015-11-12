@@ -1,4 +1,4 @@
-openmediavault-luksencryption (1.2.4) UNRELEASED; urgency=medium
+openmediavault-luksencryption (1.3.0) UNRELEASED; urgency=medium
 
   * Added check on matching UUID for header restore function (with override).
   * Added test passphrase method that reports which keyslot was unlocked.
@@ -7,8 +7,9 @@ openmediavault-luksencryption (1.2.4) UNRELEASED; urgency=medium
   * Added keyslots in use column.
   * Tweaked text for unlocking form.
   * Add icons to keys and header sub-menus items.
+  * Added kill slot functionality.
 
- -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 12 Nov 2015 14:30:18 +0000
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 12 Nov 2015 14:53:43 +0000
 
 openmediavault-luksencryption (1.1.0) unstable; urgency=medium
 

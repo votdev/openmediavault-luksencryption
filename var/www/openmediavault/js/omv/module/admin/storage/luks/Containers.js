@@ -439,6 +439,83 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
 
 
 /**
+ * @class OMV.module.admin.storage.luks.container.KillKeySlot
+ * @derived OMV.workspace.window.Form
+ * @param uuid The UUID of the configuration object.
+ * @param devicefile The device file, e.g. /dev/sda.
+ * TODO: check used key slots, warn if removing last key
+ */
+Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
+    extend: "OMV.workspace.window.Form",
+
+    rpcService: "LuksMgmt",
+    rpcSetMethod: "killContainerKeySlot",
+    title: _("Kill key slot"),
+    autoLoadData: false,
+    okButtonText: _("Kill"),
+    hideResetButton: true,
+    width: 480,
+
+    getFormItems: function() {
+        var me = this;
+        return [{
+            xtype: "textfield",
+            name: "devicefile",
+            fieldLabel: _("Device"),
+            allowBlank: false,
+            readOnly: true,
+            value: me.devicefile
+        },{
+            xtype: "passwordfield",
+            name: "passphrase",
+            fieldLabel: _("Passphrase"),
+            allowBlank: false,
+            plugins: [{
+                ptype: "fieldinfo",
+                text: _("Enter an existing, valid passphrase that unlocks the device.")
+            }]
+        },{
+            xtype: "numberfield",
+            name: "keyslot",
+            fieldLabel: _("Key slot"),
+            minValue: 0,
+            maxValue: 7,
+            allowDecimals: false,
+            allowBlank: false,
+            plugins: [{
+                    ptype: "fieldinfo",
+                    text: _("The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to find out which slot you want to destroy.")
+            }]
+        }];
+    },
+
+    doSubmit: function() {
+        var me = this;
+        OMV.MessageBox.show({
+            title: _("Confirmation"),
+            msg: _("Do you really want to kill this key slot? Ensure that you have another key which will unlock the device."),
+            buttons: Ext.Msg.YESNO,
+            fn: function(answer) {
+                if(answer === "no")
+                    return;
+                me.superclass.doSubmit.call(me);
+            },
+            scope: me,
+            icon: Ext.Msg.QUESTION
+        });
+    },
+
+    getRpcSetParams: function() {
+        var me = this;
+        var params = me.callParent(arguments);
+        return Ext.apply(params, {
+            devicefile: me.devicefile
+        });
+    }
+});
+
+
+/**
  * @class OMV.module.admin.storage.luks.container.Detail
  * @derived OMV.workspace.window.TextArea
  */
@@ -548,7 +625,7 @@ Ext.define("OMV.module.admin.storage.luks.container.RestoreHeader", {
             return;
         OMV.MessageBox.show({
             title: _("Restore encrypted device header"),
-            msg: _("Do you really want to write the header to the device?<br/>Replacing the header will destroy existing keyslots."),
+            msg: _("Do you really want to write the header to the device?<br/>Replacing the header will destroy existing key slots."),
             icon: Ext.Msg.WARNING,
             buttonText: {
                 yes: _("No"),
@@ -741,7 +818,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 return value;
             }
         },{
-            text: _("Keyslots in use"),
+            text: _("Key slots in use"),
             sortable: true,
             dataIndex: "usedslots",
             stateId: "usedslots",
@@ -852,6 +929,11 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                             text: _("Test"),
                             value: "test",
                             icon: "images/info.svg",
+                            iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
+                        },{
+                            text: _("Kill slot"),
+                            value: "kill",
+                            icon: "images/delete.svg",
                             iconCls: Ext.baseCSSPrefix + "btn-icon-16x16"
                         }],
                 listeners: {
@@ -1042,7 +1124,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         }
                     }
                 }).show();
-            break;
+                break;
             case "change":
                 Ext.create("OMV.module.admin.storage.luks.container.ChangePassphrase", {
                     uuid: record.get("uuid"),
@@ -1054,7 +1136,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         }
                     }
                 }).show();
-            break;
+                break;
             case "remove":
                 Ext.create("OMV.module.admin.storage.luks.container.RemovePassphrase", {
                     uuid: record.get("uuid"),
@@ -1066,7 +1148,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         }
                     }
                 }).show();
-            break;
+                break;
             case "test":
                 Ext.create("OMV.module.admin.storage.luks.container.Passphrase", {
                     title:          _("Test passphrase"),
@@ -1080,7 +1162,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         submit: function(wnd, response, keyslot) {
                             OMV.MessageBox.show({
                                 title: _("Success"),
-                                msg: _("The passphrase successfully unlocked keyslot ") + keyslot,
+                                msg: _("The passphrase successfully unlocked key slot ") + keyslot,
                                 buttons: Ext.Msg.OK,
                                 scope: me,
                                 icon: Ext.Msg.INFO
@@ -1089,7 +1171,19 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         },
                     }
                 }).show();
-            break;
+                break;
+            case "kill":
+                Ext.create("OMV.module.admin.storage.luks.container.KillKeySlot", {
+                    uuid: record.get("uuid"),
+                    devicefile: record.get("devicefile"),
+                    listeners: {
+                        scope: me,
+                        submit: function() {
+                            this.doReload();
+                        }
+                    }
+                }).show();
+                break;
         }
     },
 

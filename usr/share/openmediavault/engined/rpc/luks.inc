@@ -60,6 +60,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->registerMethod("changeContainerPassphrase");
         $this->registerMethod("removeContainerPassphrase");
         $this->registerMethod("testContainerPassphrase");
+        $this->registerMethod("killContainerKeySlot");
         $this->registerMethod("backupContainerHeader");
         $this->registerMethod("restoreContainerHeader");
     }
@@ -649,9 +650,49 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Test passphrase.
         if (FALSE === ($slot = $luks->testKey($params))) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("The passphrase did not unlock any keyslot on the device"));
+              sprintf("The passphrase did not unlock any key slot on the device"));
         } else {
             return $slot;
+        }
+    }
+
+    /**
+     * Kill a keyslot on the container.
+     * @param params An array containing the following fields:
+     *     \em devicefile The device file of the container to modify.
+     *     \em passphrase A current passphrase that will unlock the device.
+     *     \em keyslot A number from 0-7 representing which keyslot to kill.
+     * @param context The context of the caller.
+     * @return None.
+     * @throw E_MISC_FAILURE
+     * @throw E_EXEC_FAILED
+     */
+    public function killContainerKeySlot($params, $context) {
+        // Validate the RPC caller context.
+        $this->validateMethodContext($context, array(
+            "role" => OMV_ROLE_ADMINISTRATOR
+        ));
+        // Validate the parameters of the RPC service method.
+        $this->validateMethodParams($params, '{
+            "type":"object",
+            "properties":{
+                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":{"type":"string"},
+                "keyslot":{ "type": "integer", "minimum":0, "maximum":7 }
+            }
+        }');
+        // Check if container exists.
+        $luks = new OMVLuksContainer($params['devicefile']);
+        if (FALSE === $luks->exists()) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+              sprintf("No encryption found on '%s'",
+                        $params['devicefile']));
+        }
+        // Kill the keyslot.
+        if (!$luks->killKeySlot($params)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+                gettext("Failed to kill the key slot on the encrypted device: %s"),
+                $luks->getLastError()));
         }
     }
 

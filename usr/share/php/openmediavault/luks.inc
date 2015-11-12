@@ -545,6 +545,31 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
+     * Kill a keyslot - remove a key from the container without
+     * knowing it (cf. removeKey)
+     * @param params An array containing the following fields:
+     *   \em passphrase A passphrase that unlocks the device.
+     *   \em keyslot A number from 0-7 representing which keyslot to remove
+     *           (this could be any keyslot, e.g. the one corresponding to
+     *           the supplied key/passphrase, or a different one).
+     * @return TRUE if successful, otherwise FALSE.
+     */
+    public function killKeySlot($params) {
+        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                        "| cryptsetup luksRemoveKey %s %s --key-file=- 2>&1'",
+                        escapeshellarg($params['passphrase']),
+                        escapeshellarg($this->getDeviceFile()),
+                        escapeshellarg($params['keyslot']));
+        @OMVUtil::exec($cmd, $output, $result);
+        if ($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $this->refresh();
+        return TRUE;
+    }
+
+    /**
      * Test whether a key (passphrase) will open the container.
      * @param params An array containing the following fields:
      *   \em passphrase The passphrase to test.
