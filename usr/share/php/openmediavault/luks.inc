@@ -83,7 +83,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function getDeviceMapperName() {
         // Make sure the canonical device file is used to extract the name
         // of the device.
-        $path = sprintf("/sys/block/%s/dm/name",
+        $path = sprintf("/sys/class/block/%s/dm/name",
                         $this->getDeviceMapperCanonicalName());
         if(!file_exists($path))
             return FALSE;
@@ -97,7 +97,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function getDeviceMapperUuid() {
         // Make sure the canonical device file is used to extract the name
         // of the device.
-        $path = sprintf("/sys/block/%s/dm/uuid",
+        $path = sprintf("/sys/class/block/%s/dm/uuid",
                         $this->getDeviceMapperCanonicalName());
         if(!file_exists($path))
             return FALSE;
@@ -227,8 +227,8 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      */
     public static function isLuksContainer($deviceFile) {
         // TODO: would it be better (quicker) to check the UUID
-        // in, e.g., /sys/block/dm-0/dm/uuid (it begins 'CRYPTO'
-        // for LUKS/dm-crypt devices)?
+        // in, e.g., /sys/class/block/dm-0/dm/uuid (it begins
+        // with 'CRYPTO' for LUKS/dm-crypt devices)?
         $cmd = sprintf("export LANG=C; cryptsetup isLuks %s",
                         escapeshellarg($deviceFile));
         @OMVUtil::exec($cmd, $output, $result);
@@ -245,7 +245,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function getHolders() {
         // Make sure the canonical device file is used to extract the name
         // of the device.
-        $path = sprintf("/sys/block/%s/holders", $this->getDeviceName(TRUE));
+        $path = sprintf("/sys/class/block/%s/holders", $this->getDeviceName(TRUE));
         if(!file_exists($path))
             return FALSE;
         $result = array();
