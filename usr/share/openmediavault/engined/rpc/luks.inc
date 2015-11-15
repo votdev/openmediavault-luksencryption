@@ -269,7 +269,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Check that the container is not already open, then use
         // the supplied passphrase to unlock it if not
         if (FALSE === $luks->isOpen()) {
-            if (FALSE === $luks->open($params['passphrase'])) {
+            if (FALSE === $luks->open($params)) {
                 throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
                     sprintf(gettext("Unable to unlock encrypted device: %s"),
                             $luks->getLastError()));

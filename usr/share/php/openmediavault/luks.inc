@@ -65,6 +65,16 @@ class OMVLuksContainers extends OMVObject {
  */
 class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
+    /**
+     * Notes for cryptsetup:
+     * Cryptsetup returns 0 on success and a non-zero value on error.
+     * Error codes are:
+     *  1 wrong parameters
+     *  2 no permission (bad passphrase)
+     *  3 out of memory
+     *  4 wrong device specified
+     *  5 device already exists or device is busy
+     */
     protected $uuid         = "";
     protected $isOpen       = FALSE;
     protected $headerInfo   = "";
@@ -440,15 +450,16 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
     /**
      * Open (unlock) the container.
-     * @param passphrase A passphrase that will unlock the LUKS device.
+     * @param params An array containing the following fields:
+     *   \em passphrase A passphrase that will unlock the LUKS device.
      * @return TRUE if successful, otherwise FALSE.
      * TODO: change from using [dev]-crypt as the mapper name to the UUID of
      *       container instead (unique, probably will be needed for crypttab)
      */
-    public function open($passphrase) {
+    public function open($params) {
         $cmd = sprintf("export LANG=C; echo -n %s ".
                         "| cryptsetup luksOpen %s %s-crypt --key-file=- 2>&1",
-                        escapeshellarg($passphrase),
+                        escapeshellarg($params['passphrase']),
                         escapeshellarg($this->getDeviceFile()),
                         escapeshellarg($this->getDeviceName()));
         @OMVUtil::exec($cmd, $output, $result);
@@ -580,17 +591,57 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      *         passphrase matched (unlocked), otherwise FALSE.
      */
     public function testKey($params) {
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksOpen -v %s --test-passphrase ".
-                        "--key-file=- 2>&1'",
-                        escapeshellarg($params['passphrase']),
-                        escapeshellarg($this->getDeviceFile()));
+        // Check what version of cryptsetup is installed to determine
+        // if the --test-passphrase argument is supported or not.
+        $cmd = "export LANG=C; cryptsetup --version 2>&1";
         @OMVUtil::exec($cmd, $output, $result);
-        if ($result !== 0) {
+        if($result !== 0) {
             $this->setLastError($output);
             return FALSE;
         }
-        $slot = explode(" ", $output[0])[2];
+        $cryptsetupVersion = str_replace("cryptsetup ", "", $output[0]);
+        $hasTestPassphrase = version_compare($cryptsetup_version, "1.5.0", ">=");
+        unset($cmd, $output, $result);
+        // Decide which codepath to use.
+        if(TRUE === $hasTestPassphrase) {
+            $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                            "| cryptsetup luksOpen -v --test-passphrase %s ".
+                            "--key-file=- 2>&1'",
+                            escapeshellarg($params['passphrase']),
+                            escapeshellarg($this->getDeviceFile()));
+            $validCodes = array(0);
+        } else {
+            // If the '--test-passphrase' argument is not available, use a
+            // workaround where we open the device with a temporary name and
+            // then close it later. If the device is already open, this fails
+            // with error code 5 (device already open or busy), but will still
+            // report which slot was unlocked if key is valid.
+            $tempName = uniqid("luksTest_");
+            $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                            "| cryptsetup luksOpen -v %s %s ".
+                            "--key-file=- 2>&1'",
+                            escapeshellarg($params['passphrase']),
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($tempName));
+            $validCodes = array(0,5);
+        }
+        // Test the passphrase and get the key slot number if successful
+        @OMVUtil::exec($cmd, $output, $result);
+        if(!in_array($result, $validCodes)) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $slot = explode(" ",
+                        array_shift(
+                            preg_grep("/^Key slot \d unlocked.$/", $output)
+                        )
+                )[2];
+        // If we actually opened the device, under a temporary name, close it.
+        if (FALSE === $hasTestPassphrase) {
+            if($result === 0 && $this->getDecryptedName() == $tempName)
+                $this->close();
+        }
+        // Return which key slot was unlocked.
         return $slot;
     }
 
