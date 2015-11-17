@@ -49,7 +49,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
     title: _("Create encrypted device"),
     okButtonText: _("OK"),
     hideResetButton: true,
-    width: 480,
+    width: 500,
     rpcService: "LuksMgmt",
     rpcSetMethod: "createContainer",
 
@@ -157,7 +157,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
     hideResetButton: true,
     okButtonText: _("Unlock"),
     submitMsg: _("Unlocking ..."),
-    width: 480,
+    width: 500,
 
     constructor: function() {
         var me = this;
@@ -181,13 +181,32 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.params.devicefile
+            value: me.params.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "passwordfield",
             name: "passphrase",
             fieldLabel: _("Passphrase"),
-            allowBlank: false
+            allowBlank: false,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         }];
+    },
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'Passphrase'.
+                       var field = me.fp.findField("passphrase");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
     },
 
     getRpcSetParams: function() {
@@ -196,6 +215,13 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
         return Ext.apply(params, {
             devicefile: me.params.devicefile
         });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
     }
 });
 
@@ -216,7 +242,28 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
     autoLoadData: false,
     okButtonText: _("Add"),
     hideResetButton: true,
-    width: 480,
+    width: 500,
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'Current passphrase'.
+                       var field = me.fp.findField("oldpassphrase");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
+    },
+
+    getFormConfig: function() {
+        var me = this;
+        return {
+            layout: {
+                type: "vbox",
+                align: "stretch"
+            }
+        };
+    },
 
     getFormItems: function() {
         var me = this;
@@ -226,7 +273,11 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.devicefile
+            value: me.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "passwordfield",
             name: "oldpassphrase",
@@ -235,7 +286,11 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
             plugins: [{
                 ptype: "fieldinfo",
                 text: _("Enter an existing, valid passphrase that unlocks the device.")
-            }]
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "fieldset",
             title: _("New passphrase to add to the encrypted device"),
@@ -247,13 +302,21 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
                 name: "newpassphrase",
                 fieldLabel: _("Passphrase"),
                 allowBlank: false,
-                triggerAction: "all"
+                triggerAction: "all",
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
             },{
                 xtype: "passwordfield",
                 name: "newpassphraseconf",
                 fieldLabel: _("Confirm passphrase"),
                 allowBlank: false,
-                submitValue: false
+                submitValue: false,
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
             }]
         }];
     },
@@ -283,6 +346,13 @@ Ext.define("OMV.module.admin.storage.luks.container.AddPassphrase", {
         return Ext.apply(params, {
             devicefile: me.devicefile
         });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
     }
 });
 
@@ -302,7 +372,18 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
     autoLoadData: false,
     okButtonText: _("Change"),
     hideResetButton: true,
-    width: 480,
+    width: 500,
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'Current passphrase'.
+                       var field = me.fp.findField("oldpassphrase");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
+    },
 
     getFormItems: function() {
         var me = this;
@@ -312,7 +393,11 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.devicefile
+            value: me.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "passwordfield",
             name: "oldpassphrase",
@@ -321,7 +406,11 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
             plugins: [{
                 ptype: "fieldinfo",
                 text: _("Enter an existing, valid passphrase which you want to change.")
-            }]
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "fieldset",
             title: _("New passphrase to replace the existing one (above)"),
@@ -333,13 +422,21 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
                 name: "newpassphrase",
                 fieldLabel: _("Passphrase"),
                 allowBlank: false,
-                triggerAction: "all"
+                triggerAction: "all",
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
             },{
                 xtype: "passwordfield",
                 name: "newpassphraseconf",
                 fieldLabel: _("Confirm passphrase"),
                 allowBlank: false,
-                submitValue: false
+                submitValue: false,
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
             }]
         }];
     },
@@ -369,6 +466,13 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
         return Ext.apply(params, {
             devicefile: me.devicefile
         });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
     }
 });
 
@@ -389,7 +493,18 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
     autoLoadData: false,
     okButtonText: _("Remove"),
     hideResetButton: true,
-    width: 480,
+    width: 500,
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'Passphrase'.
+                       var field = me.fp.findField("passphrase");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
+    },
 
     getFormItems: function() {
         var me = this;
@@ -399,7 +514,11 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.devicefile
+            value: me.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "passwordfield",
             name: "passphrase",
@@ -408,7 +527,11 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
             plugins: [{
                 ptype: "fieldinfo",
                 text: _("Enter an existing, valid passphrase which you want to remove from the encrypted device.")
-            }]
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         }];
     },
 
@@ -434,6 +557,13 @@ Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
         return Ext.apply(params, {
             devicefile: me.devicefile
         });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
     }
 });
 
@@ -454,7 +584,18 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
     autoLoadData: false,
     okButtonText: _("Kill"),
     hideResetButton: true,
-    width: 480,
+    width: 500,
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'Passphrase'.
+                       var field = me.fp.findField("passphrase");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
+    },
 
     getFormItems: function() {
         var me = this;
@@ -464,7 +605,11 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
-            value: me.devicefile
+            value: me.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "passwordfield",
             name: "passphrase",
@@ -473,7 +618,11 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
             plugins: [{
                 ptype: "fieldinfo",
                 text: _("Enter an existing, valid passphrase that unlocks the device.")
-            }]
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         },{
             xtype: "numberfield",
             name: "keyslot",
@@ -486,7 +635,11 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
             plugins: [{
                     ptype: "fieldinfo",
                     text: _("The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to find out which slot you want to destroy.")
-            }]
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
         }];
     },
 
@@ -512,6 +665,13 @@ Ext.define("OMV.module.admin.storage.luks.container.KillKeySlot", {
         return Ext.apply(params, {
             devicefile: me.devicefile
         });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
     }
 });
 
@@ -939,9 +1099,9 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         }],
                 listeners: {
                     scope: me,
-          click: function(menu, item, e, eOpts) {
+                    click: function(menu, item, e, eOpts) {
                         this.onKeysButton(item.value);
-          }
+                    }
                 }
             })
         },{
