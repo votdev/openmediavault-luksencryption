@@ -612,13 +612,13 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
             $validCodes = array(0);
         } else {
             // If the '--test-passphrase' argument is not available, use a
-            // workaround where we open the device with a temporary name and
-            // then close it later. If the device is already open, this fails
-            // with error code 5 (device already open or busy), but will still
-            // report which slot was unlocked if key is valid.
+            // workaround where we open the device (read only) with a temporary
+            // name and then close it later. If the device is already open, this
+            // fails with error code 5 (device already open or busy), but will
+            // still report which slot was unlocked if key is valid.
             $tempName = uniqid("luksTest_");
             $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                            "| cryptsetup luksOpen -v %s %s ".
+                            "| cryptsetup luksOpen -r -v %s %s ".
                             "--key-file=- 2>&1'",
                             escapeshellarg($params['passphrase']),
                             escapeshellarg($this->getDeviceFile()),
