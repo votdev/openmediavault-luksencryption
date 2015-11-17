@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-12 19:04+0000\n"
-"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"PO-Revision-Date: 2015-11-14 09:04+0000\n"
+"Last-Translator: Raul Fernandez Garcia <raulfg3@gmail.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr ""
+msgstr "%s no es una cabecera LUKS de backup válida."
 
 msgid "Add"
 msgstr "Añadir"
@@ -127,10 +127,10 @@ msgid "Failed to extract the LUKS header from "
 msgstr "Error al extraer las cabeceras LUKS"
 
 msgid "Failed to get list of devices"
-msgstr ""
+msgstr "Error al conseguir la lista de discos"
 
 msgid "Failed to get list of encrypted devices"
-msgstr ""
+msgstr "Error al conseguir la lista de discos cifrados"
 
 msgid "Failed to kill the key slot on the encrypted device: %s"
 msgstr ""
@@ -145,7 +145,7 @@ msgid "Failed to restore the LUKS header to "
 msgstr "Error al restaurar las cabeceras LUKS"
 
 msgid "Force"
-msgstr ""
+msgstr "Forzar"
 
 msgid "Header file"
 msgstr "Archivo con las cabeceras"
@@ -178,7 +178,7 @@ msgid "Lock"
 msgstr "Bloquear"
 
 msgid "Locking device ..."
-msgstr ""
+msgstr "Bloqueando disco ..."
 
 msgid "New passphrase to add to the encrypted device"
 msgstr "Nueva contraseña a añadir al disco cifrado."
@@ -193,7 +193,7 @@ msgid "No encryption found on '%s'"
 msgstr "No se ha encontrado cifrado alguno en '%s'"
 
 msgid "No storage device backend exists for device %s"
-msgstr ""
+msgstr "No existe suficiente espacio en disco en %s"
 
 msgid "OK"
 msgstr "OK"
@@ -201,7 +201,7 @@ msgstr "OK"
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
 "device."
-msgstr ""
+msgstr "Sobreescribir la cabecera incluso si no coincide con la del UUID del backup"
 
 msgid "Passphrase"
 msgstr "Contraseña"
@@ -237,13 +237,13 @@ msgid "Success"
 msgstr ""
 
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 msgid "Test passphrase"
-msgstr ""
+msgstr "Contraseña de Test"
 
 msgid "The UUID of the LUKS header backup file "
-msgstr ""
+msgstr "UUID de la cabecera de backup LUKS"
 
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
@@ -257,7 +257,7 @@ msgid "The passphrase successfully unlocked key slot "
 msgstr ""
 
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
 msgstr "Imposible de bloquear el disco cifrado: %s"
@@ -275,7 +275,7 @@ msgid "Unlocked"
 msgstr "Desbloqueado"
 
 msgid "Unlocking ..."
-msgstr ""
+msgstr "Desbloqueando ..."
 
 msgid "Upload header backup file"
 msgstr "Subir el archivo de backup d ela cabecera"
