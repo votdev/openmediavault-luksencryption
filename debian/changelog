@@ -2,6 +2,7 @@ openmediavault-luksencryption (1.4.0) UNRELEASED; urgency=medium
 
   * Add submit on enter key and focus initial field functionality to most window forms.
   * Open device read only when testing passphrase with cryptsetup <1.5.0.
+  * Fix for auto-mounting with multi-device BTRFS filesystems - wait until all devices are available.
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Tue, 17 Nov 2015 11:26:54 +0000
 

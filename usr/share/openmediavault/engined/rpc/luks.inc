@@ -285,13 +285,49 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                             array("devicefile" => $df), $context)) {
                 if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
                                 array("id" => $df), $context))) {
-                    OMVRpc::exec("FileSystemMgmt", "mount",
-                        array("id" => $meObject['fsname'], "fstab" => FALSE),
-                        $context);
+                    switch (strtolower($meObject['type'])) {
+                    case "btrfs":
+                        /**
+                         * Check if the unlocked device is part of a multi-
+                         * device BTRFS filesystem, and don't attempt to mount
+                         * it if it's not ready (not all devices are available,
+                         * e.g. if more containers must be unlocked first, wait
+                         * until they are all open).
+                         * Note that this only works for the first time devices
+                         * are opened - even if LUKS devices that are part of a
+                         * multi-device BTRFS filesystem are later closed, some
+                         * information is cached and so btrfs subsequently
+                         * always reports the filesystem as ready.
+                         */
+                        $cmd = sprintf("export LANG=C; btrfs device ready %s",
+                                        $luks->getDecryptedDeviceFile());
+                        @OMVUtil::exec($cmd, $output, $result);
+                        if($result !== 0) {
+                            $this->setLastError($output);
+                            continue;
+                        }
+                    case "ext2":
+                    case "ext3":
+                    case "ext4":
+                    case "jfs":
+                    case "xfs":
+                    case "hfsplus":
+                    case "reiserfs":
+                    case "iso9660":
+                    case "udf":
+                    case "vfat":
+                    case "ntfs":
+                    default:
+                        OMVRpc::exec("FileSystemMgmt", "mount",
+                            array(
+                                    "id" => $meObject['fsname'],
+                                    "fstab" => FALSE
+                                 ),
+                            $context);
+                    }
                 }
             }
         }
-
     }
 
     /**
