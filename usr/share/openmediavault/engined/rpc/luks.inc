@@ -255,8 +255,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"}
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	{"type":"string", "optional":"true"}
             }
         }');
         // Validate the container

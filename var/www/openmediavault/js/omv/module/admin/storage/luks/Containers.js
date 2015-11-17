@@ -169,7 +169,29 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
             layout: {
                 type: "vbox",
                 align: "stretch"
-            }
+            },
+            plugins: [{
+                ptype: "linkedfields",
+                correlations: [{
+                    name: "passphrase",
+                    conditions: [
+                        { name: "keyfile", op: "z"}
+                    ],
+                    properties: [
+                        "!allowBlank",
+                        "submitValue"
+                    ]
+                },{
+                    name: "keyfile",
+                    conditions: [
+                        { name: "passphrase", op: "z"}
+                    ],
+                    properties: [
+                        "!allowBlank",
+                        "submitValue"
+                    ]
+                }]
+            }]
         };
     },
 
@@ -187,14 +209,31 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
                 specialkey: me.submitOnEnter
             }
         },{
-            xtype: "passwordfield",
-            name: "passphrase",
-            fieldLabel: _("Passphrase"),
-            allowBlank: false,
-            listeners: {
-                scope: me,
-                specialkey: me.submitOnEnter
-            }
+            xtype: "fieldset",
+            title: _("Enter a passphrase or upload a key file"),
+            defaults: {
+                labelSeparator: ""
+            },
+            items: [{
+                xtype: "passwordfield",
+                name: "passphrase",
+                fieldLabel: _("Passphrase"),
+                allowBlank: false,
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
+            },{
+                xtype: "filefield",
+                name: "keyfile",
+                fieldLabel: _("Key file"),
+                buttonText: _("Browse..."),
+                allowBlank: true,
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
+            }]
         }];
     },
 
