@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Stefan Thrane Overby <stoverby@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-12 19:04+0000\n"
-"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"PO-Revision-Date: 2015-11-19 07:31+0000\n"
+"Last-Translator: Stefan Thrane Overby <stoverby@gmail.com>\n"
 "Language-Team: Danish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/da/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -18,55 +19,55 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr ""
+msgstr "%s er ikke en gyldig LUKS header backup fil"
 
 msgid "Add"
-msgstr ""
+msgstr "Tilføj"
 
 msgid "Add passphrase"
-msgstr ""
+msgstr "Tilføj adgangskode"
 
 msgid "Backup header"
-msgstr ""
+msgstr "Backup header"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Annuller"
 
 msgid "Change"
-msgstr ""
+msgstr "Ændr"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "Ændr adgangskode"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Vælg en plads, der skal stoppes ..."
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "Bekræft adgangskode"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Bekræftelse"
 
 msgid "Create"
-msgstr ""
+msgstr "Opret"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "Opret krypteret enhed"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "Nuværende adgangskode"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "Krypteret enhed"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "Slet krypteret enhed"
 
 msgid "Detail"
-msgstr ""
+msgstr "Detaljer"
 
 msgid "Device"
-msgstr ""
+msgstr "Enhed"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
@@ -94,19 +95,19 @@ msgid ""
 msgstr ""
 
 msgid "Encrypted Devices"
-msgstr ""
+msgstr "Krypteret Enheder"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "Krypteret enheds detaljer"
 
 msgid "Encryption"
-msgstr ""
+msgstr "Kryptering"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
-msgstr ""
+msgstr "Indtast en eksisterende, gyldig adgangskode, der låser enheden op."
 
 msgid "Enter an existing, valid passphrase which you want to change."
-msgstr ""
+msgstr "Indtast en eksisterende, gyldig adgangskode, som du ønsker at ændre."
 
 msgid ""
 "Enter an existing, valid passphrase which you want to remove from the "
