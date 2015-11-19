@@ -140,23 +140,25 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
 
 
 /**
- * Generic class for passphrase entry - used to either unlock
- * a device or just test the passphrase
- * @class OMV.module.admin.storage.luks.container.Passphrase
+ * Generalized class for unlocking - used to either unlock
+ * a device or just test a key
+ * @class OMV.module.admin.storage.luks.container.Unlock
  * @derived OMV.workspace.window.Form
  * @param uuid The UUID of the configuration object.
  * @param devicefile The device file, e.g. /dev/sda.
  */
-Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
+Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
     extend: "OMV.workspace.window.Form",
 
     rpcService: "LuksMgmt",
     rpcSetMethod: "openContainer", // override
     title: _("Unlock encrypted device"), //override
+    keyFileUrl: "upload.php",
     autoLoadData: false,
     hideResetButton: true,
     okButtonText: _("Unlock"),
     submitMsg: _("Unlocking ..."),
+    waitMsg: _("Uploading key file and unlocking ..."),
     width: 500,
 
     constructor: function() {
@@ -175,20 +177,19 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
                 correlations: [{
                     name: "passphrase",
                     conditions: [
-                        { name: "keyfile", op: "z"}
+                        { name: "file", op: "z"}
                     ],
                     properties: [
                         "!allowBlank",
                         "submitValue"
                     ]
                 },{
-                    name: "keyfile",
+                    name: "file",
                     conditions: [
                         { name: "passphrase", op: "z"}
                     ],
                     properties: [
-                        "!allowBlank",
-                        "submitValue"
+                        "!allowBlank"
                     ]
                 }]
             }]
@@ -203,6 +204,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
             fieldLabel: _("Device"),
             allowBlank: false,
             readOnly: true,
+            submitValue: false,
             value: me.params.devicefile,
             listeners: {
                 scope: me,
@@ -222,10 +224,14 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
                 listeners: {
                     scope: me,
                     specialkey: me.submitOnEnter
-                }
+                }/*,
+                plugins: [{
+                    ptype: "fieldinfo",
+                    text: _("If a key file is uploaded, any passphrase entered will not be used.")
+                }]*/
             },{
                 xtype: "filefield",
-                name: "keyfile",
+                name: "file",
                 fieldLabel: _("Key file"),
                 buttonText: _("Browse..."),
                 allowBlank: true,
@@ -252,15 +258,98 @@ Ext.define("OMV.module.admin.storage.luks.container.Passphrase", {
         var me = this;
         var params = me.callParent(arguments);
         return Ext.apply(params, {
+            uuid: me.params.uuid,
             devicefile: me.params.devicefile
+        });
+    },
+
+    onOkButton: function() {
+        var me = this;
+        var basicForm = me.fp.getForm();
+        if(!basicForm.isValid())
+            return;
+        // How are we unlocking, key file or passphrase?
+        if(me.fp.findField("file").value) {
+            me.doUpload();
+        } else {
+            me.doSubmit();
+        }
+    },
+
+    doUpload: function() {
+        var me = this;
+        var basicForm = me.fp.getForm();
+        basicForm.submit({
+            url: me.keyFileUrl,
+            method: "POST",
+            params: {
+                service: me.rpcService,
+                method: me.rpcSetMethod,
+                params: !Ext.isEmpty(me.params) ? Ext.JSON.encode(
+                  me.params).htmlspecialchars() : me.params
+            },
+            waitMsg: me.waitMsg,
+            scope: me,
+            success: function(form, action) {
+                this.onUploadSuccess(form, action);
+            },
+            failure: function(form, action) {
+                this.onUploadFailure(form, action);
+            }
         });
     },
 
     submitOnEnter: function(field, event) {
         var me = this;
         if (event.getKey() == event.ENTER) {
-            me.superclass.onOkButton.call(me);
+            me.onOkButton.call(me);
         }
+    },
+
+    /**
+     * Method that is called when the file upload was successful.
+     * @param form The form that requested the action.
+     * @param action The Action object which performed the operation.
+     */
+    onUploadSuccess: function(form, action) {
+        var me = this;
+        var keyslot = action.result.responseText; // when doing test function
+        // !!! Attention !!! Fire event before window is closed,
+        // otherwise the dialog's own listener is removed before the
+        // event has been fired and the action has been executed.
+        me.fireEvent("success", me, keyslot);
+        // Now close the dialog.
+        me.close();
+    },
+
+    /**
+     * Method that is called when the file upload has been failed.
+     * @param form The form that requested the action.
+     * @param action The Action object which performed the operation.
+     */
+    onUploadFailure: function(form, action) {
+        var msg = action.response.responseText;
+        try {
+            // Try to decode JSON error messages.
+            msg = Ext.JSON.decode(msg);
+            // Format the message text for line breaks.
+            msg.message = this.nl2br(msg.message);
+        } catch(e) {
+            // Error message is plain text, e.g. error message from the
+            // web server.
+        }
+        OMV.MessageBox.error(null, msg);
+    },
+
+    /**
+     * Helper function to insert line breaks back into the error message
+     * @param str The message to process for line breaks.
+     * @param is_xhtml Boolean, whether to insert XHTML-compatible <br/>
+     *                 tags or not (default is true).
+     */
+    nl2br: function(str, is_xhtml) {
+        var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
+        return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
     }
 });
 
@@ -1272,19 +1361,24 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     onUnlockButton: function() {
         var me = this;
         var record = me.getSelected();
-        Ext.create("OMV.module.admin.storage.luks.container.Passphrase", {
+        Ext.create("OMV.module.admin.storage.luks.container.Unlock", {
             title:      _("Unlock encrypted device"),
             rpcMethod:  "openContainer",
             params: {
                 uuid:       record.get("uuid"),
                 devicefile: record.get("devicefile")
             },
-            listeners: {
+            listeners: [{
                 scope: me,
                 submit: function() {
                     this.doReload();
                 }
-            }
+            },{
+                scope: me,
+                success: function() {
+                    this.doReload();
+                }
+            }]
         }).show();
     },
 
@@ -1358,26 +1452,38 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 }).show();
                 break;
             case "test":
-                Ext.create("OMV.module.admin.storage.luks.container.Passphrase", {
-                    title:          _("Test passphrase"),
-                    rpcSetMethod:   "testContainerPassphrase",
+                Ext.create("OMV.module.admin.storage.luks.container.Unlock", {
+                    title:          _("Test key"),
+                    rpcSetMethod:   "testContainerKey",
                     params: {
                         uuid:       record.get("uuid"),
                         devicefile: record.get("devicefile")
                     },
-                    listeners: {
+                    listeners: [{
                         scope: me,
                         submit: function(wnd, response, keyslot) {
                             OMV.MessageBox.show({
                                 title: _("Success"),
-                                msg: _("The passphrase successfully unlocked key slot ") + keyslot,
+                                msg: _("Successfully unlocked key slot ") + keyslot,
                                 buttons: Ext.Msg.OK,
                                 scope: me,
                                 icon: Ext.Msg.INFO
                             });
                             this.doReload();
                         },
-                    }
+                    },{
+                        scope: me,
+                        success: function(wnd, keyslot, response) {
+                            OMV.MessageBox.show({
+                                title: _("Success"),
+                                msg: _("Successfully unlocked key slot ") + keyslot,
+                                buttons: Ext.Msg.OK,
+                                scope: me,
+                                icon: Ext.Msg.INFO
+                            });
+                            this.doReload();
+                        },
+                    }]
                 }).show();
                 break;
             case "kill":

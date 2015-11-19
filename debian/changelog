@@ -1,3 +1,9 @@
+openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
+
+  * Key file support for unlocking and test function.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 19 Nov 2015 17:17:01 +0000
+
 openmediavault-luksencryption (1.4.0) unstable; urgency=medium
 
   * Add submit on enter key and focus initial field functionality to most window forms.
