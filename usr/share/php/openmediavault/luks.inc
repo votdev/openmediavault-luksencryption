@@ -567,11 +567,31 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      *   \em passphrase The passphrase to remove.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function removeKey($params) {
+    public function removePassphrase($params) {
         $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
                         "| cryptsetup luksRemoveKey %s --key-file=- 2>&1'",
                         escapeshellarg($params['passphrase']),
                         escapeshellarg($this->getDeviceFile()));
+        @OMVUtil::exec($cmd, $output, $result);
+        if ($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $this->refresh();
+        return TRUE;
+    }
+
+    /**
+     * Remove a key filefrom the container.
+     * @param params An array containing the following fields:
+     *   \em filepath Path to a key file to remove from the device.
+     * @return TRUE if successful, otherwise FALSE.
+     */
+    public function removeKeyFile($params) {
+        $cmd = sprintf("export LANG=C; cryptsetup luksRemoveKey ".
+                        "%s --key-file %s 2>&1",
+                        escapeshellarg($this->getDeviceFile()),
+                        escapeshellarg($params['filepath']));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);

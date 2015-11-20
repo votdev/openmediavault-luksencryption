@@ -140,25 +140,24 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
 
 
 /**
- * Generalized class for unlocking - used to either unlock
- * a device or just test a key
- * @class OMV.module.admin.storage.luks.container.Unlock
+ * Generalized class for providing a single key - used to
+ * unlock a device or test if a key works, or to remove a key.
+ * @class OMV.module.admin.storage.luks.container.SingleKey
  * @derived OMV.workspace.window.Form
  * @param uuid The UUID of the configuration object.
  * @param devicefile The device file, e.g. /dev/sda.
  */
-Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
+Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
     extend: "OMV.workspace.window.Form",
 
     rpcService: "LuksMgmt",
-    rpcSetMethod: "openContainer", // override
-    title: _("Unlock encrypted device"), //override
+    // rpcSetMethod: "openContainer", // override
+    // title: _("Unlock encrypted device"), //override
+    // okButtonText: _("Unlock"), // override
+    // submitMsg: _("Unlocking ..."), //override
     keyFileUrl: "upload.php",
     autoLoadData: false,
     hideResetButton: true,
-    okButtonText: _("Unlock"),
-    submitMsg: _("Unlocking ..."),
-    waitMsg: _("Uploading key file and unlocking ..."),
     width: 500,
 
     constructor: function() {
@@ -171,28 +170,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
             layout: {
                 type: "vbox",
                 align: "stretch"
-            },
-            plugins: [{
-                ptype: "linkedfields",
-                correlations: [{
-                    name: "passphrase",
-                    conditions: [
-                        { name: "file", op: "z"}
-                    ],
-                    properties: [
-                        "!allowBlank",
-                        "submitValue"
-                    ]
-                },{
-                    name: "file",
-                    conditions: [
-                        { name: "passphrase", op: "z"}
-                    ],
-                    properties: [
-                        "!allowBlank"
-                    ]
-                }]
-            }]
+            }
         };
     },
 
@@ -220,15 +198,11 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
                 xtype: "passwordfield",
                 name: "passphrase",
                 fieldLabel: _("Passphrase"),
-                allowBlank: false,
+                allowBlank: true,
                 listeners: {
                     scope: me,
                     specialkey: me.submitOnEnter
-                }/*,
-                plugins: [{
-                    ptype: "fieldinfo",
-                    text: _("If a key file is uploaded, any passphrase entered will not be used.")
-                }]*/
+                }
             },{
                 xtype: "filefield",
                 name: "file",
@@ -254,6 +228,37 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
                }, me);
     },
 
+    /**
+     * Custom form validation function to allow
+     * only one of passphrase or key file
+     */
+    isValid: function() {
+        var me = this;
+        var valid = false;
+        var passphrase = me.findField("passphrase");
+        var keyfile = me.findField("file");
+        if((passphrase.value == "" && keyfile.value) ||
+            (passphrase.value != "" && !keyfile.value))
+            valid = true;
+        if(!valid) {
+            if(passphrase.value == "" && !keyfile.value)
+                var msg = _("Either a passphrase or a key file is required");
+            else if(passphrase.value != "" && keyfile.value)
+                var msg = _("Use either a passphrase or a key file – not both");
+            this.markInvalid([
+                { id: "passphrase", msg: msg },
+                { id: "file", msg: msg }
+            ]);
+        } else {
+            if(passphrase.value == "")
+                passphrase.submitValue = false;
+            else
+                passphrase.submitValue = true;
+            this.clearInvalid();
+        }
+        return valid;
+    },
+
     getRpcSetParams: function() {
         var me = this;
         var params = me.callParent(arguments);
@@ -266,19 +271,29 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
     onOkButton: function() {
         var me = this;
         var basicForm = me.fp.getForm();
-        if(!basicForm.isValid())
+        if(!this.isValid())
             return;
-        // How are we unlocking, key file or passphrase?
-        if(me.fp.findField("file").value) {
+        // Hook into this 'askconfirmation' event to display any confirmation
+        // message needed. Typically return false from your function and use
+        // the message window to call doSubmit() or quit as appropriate.
+        if (me.fireEvent("askconfirmation", me) === false)
+            return;
+        me.doSubmit();
+    },
+
+    doSubmit: function() {
+        var me = this;
+        // What kind of key are we using, key file or passphrase?
+        if(me.fp.findField("file").value)
             me.doUpload();
-        } else {
-            me.doSubmit();
-        }
+        else
+            me.callParent(arguments);
     },
 
     doUpload: function() {
         var me = this;
         var basicForm = me.fp.getForm();
+        me.setLoading(me.submitMsg);
         basicForm.submit({
             url: me.keyFileUrl,
             method: "POST",
@@ -288,12 +303,13 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
                 params: !Ext.isEmpty(me.params) ? Ext.JSON.encode(
                   me.params).htmlspecialchars() : me.params
             },
-            waitMsg: me.waitMsg,
             scope: me,
             success: function(form, action) {
+                me.setLoading(false);
                 this.onUploadSuccess(form, action);
             },
             failure: function(form, action) {
+                me.setLoading(false);
                 this.onUploadFailure(form, action);
             }
         });
@@ -317,7 +333,9 @@ Ext.define("OMV.module.admin.storage.luks.container.Unlock", {
         // !!! Attention !!! Fire event before window is closed,
         // otherwise the dialog's own listener is removed before the
         // event has been fired and the action has been executed.
-        me.fireEvent("success", me, keyslot);
+        // Fire 'submit' instead of success to duplicate that from
+        // passphrase method, which doesn't do any uploading.
+        me.fireEvent("submit", me, keyslot);
         // Now close the dialog.
         me.close();
     },
@@ -586,97 +604,6 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
             valid = false;
         }
         return valid;
-    },
-
-    getRpcSetParams: function() {
-        var me = this;
-        var params = me.callParent(arguments);
-        return Ext.apply(params, {
-            devicefile: me.devicefile
-        });
-    },
-
-    submitOnEnter: function(field, event) {
-        var me = this;
-        if (event.getKey() == event.ENTER) {
-            me.superclass.onOkButton.call(me);
-        }
-    }
-});
-
-
-/**
- * @class OMV.module.admin.storage.luks.container.RemovePassphrase
- * @derived OMV.workspace.window.Form
- * @param uuid The UUID of the configuration object.
- * @param devicefile The device file, e.g. /dev/sda.
- * TODO: check used key slots, warn if removing last key
- */
-Ext.define("OMV.module.admin.storage.luks.container.RemovePassphrase", {
-    extend: "OMV.workspace.window.Form",
-
-    rpcService: "LuksMgmt",
-    rpcSetMethod: "removeContainerPassphrase",
-    title: _("Remove passphrase"),
-    autoLoadData: false,
-    okButtonText: _("Remove"),
-    hideResetButton: true,
-    width: 500,
-
-    initComponent: function() {
-        var me = this;
-        me.callParent(arguments);
-        me.on("show", function() {
-                       // Set focus to field 'Passphrase'.
-                       var field = me.fp.findField("passphrase");
-                       if (!Ext.isEmpty(field))
-                               field.focus(false, 500);
-               }, me);
-    },
-
-    getFormItems: function() {
-        var me = this;
-        return [{
-            xtype: "textfield",
-            name: "devicefile",
-            fieldLabel: _("Device"),
-            allowBlank: false,
-            readOnly: true,
-            value: me.devicefile,
-            listeners: {
-                scope: me,
-                specialkey: me.submitOnEnter
-            }
-        },{
-            xtype: "passwordfield",
-            name: "passphrase",
-            fieldLabel: _("Passphrase"),
-            allowBlank: false,
-            plugins: [{
-                ptype: "fieldinfo",
-                text: _("Enter an existing, valid passphrase which you want to remove from the encrypted device.")
-            }],
-            listeners: {
-                scope: me,
-                specialkey: me.submitOnEnter
-            }
-        }];
-    },
-
-    doSubmit: function() {
-        var me = this;
-        OMV.MessageBox.show({
-            title: _("Confirmation"),
-            msg: _("Do you really want to remove this passphrase? Ensure that you have another passphrase which will unlock the device."),
-            buttons: Ext.Msg.YESNO,
-            fn: function(answer) {
-                if(answer === "no")
-                    return;
-                me.superclass.doSubmit.call(me);
-            },
-            scope: me,
-            icon: Ext.Msg.QUESTION
-        });
     },
 
     getRpcSetParams: function() {
@@ -1361,9 +1288,11 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     onUnlockButton: function() {
         var me = this;
         var record = me.getSelected();
-        Ext.create("OMV.module.admin.storage.luks.container.Unlock", {
+        Ext.create("OMV.module.admin.storage.luks.container.SingleKey", {
             title:      _("Unlock encrypted device"),
-            rpcMethod:  "openContainer",
+            submitMsg:      _("Unlocking ..."),
+            okButtonText:   _("Unlock"),
+            rpcSetMethod:  "openContainer",
             params: {
                 uuid:       record.get("uuid"),
                 devicefile: record.get("devicefile")
@@ -1371,11 +1300,6 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             listeners: [{
                 scope: me,
                 submit: function() {
-                    this.doReload();
-                }
-            },{
-                scope: me,
-                success: function() {
                     this.doReload();
                 }
             }]
@@ -1440,20 +1364,44 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 }).show();
                 break;
             case "remove":
-                Ext.create("OMV.module.admin.storage.luks.container.RemovePassphrase", {
-                    uuid: record.get("uuid"),
-                    devicefile: record.get("devicefile"),
-                    listeners: {
+                Ext.create("OMV.module.admin.storage.luks.container.SingleKey", {
+                    title:          _("Remove key"),
+                    okButtonText:   _("Remove"),
+                    rpcSetMethod:   "removeContainerKey",
+                    params: {
+                        uuid:       record.get("uuid"),
+                        devicefile: record.get("devicefile")
+                    },
+                    listeners: [{
                         scope: me,
                         submit: function() {
                             this.doReload();
                         }
-                    }
+                    },{
+                        scope: me,
+                        askconfirmation: function(you) {
+                            OMV.MessageBox.show({
+                                title: _("Confirmation"),
+                                msg: _("Do you really want to remove this key? Ensure that you have another key which will unlock the device."),
+                                buttons: Ext.Msg.YESNO,
+                                fn: function(answer) {
+                                    if(answer === "no")
+                                        return;
+                                    you.doSubmit();
+                                },
+                                scope: me,
+                                icon: Ext.Msg.QUESTION
+                            });
+                            return false; // pass control to the messagebox
+                        }
+                    }]
                 }).show();
                 break;
             case "test":
-                Ext.create("OMV.module.admin.storage.luks.container.Unlock", {
+                Ext.create("OMV.module.admin.storage.luks.container.SingleKey", {
                     title:          _("Test key"),
+                    submitMsg:      _("Unlocking ..."),
+                    okButtonText:   _("Unlock"),
                     rpcSetMethod:   "testContainerKey",
                     params: {
                         uuid:       record.get("uuid"),
@@ -1470,19 +1418,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                                 icon: Ext.Msg.INFO
                             });
                             this.doReload();
-                        },
-                    },{
-                        scope: me,
-                        success: function(wnd, keyslot, response) {
-                            OMV.MessageBox.show({
-                                title: _("Success"),
-                                msg: _("Successfully unlocked key slot ") + keyslot,
-                                buttons: Ext.Msg.OK,
-                                scope: me,
-                                icon: Ext.Msg.INFO
-                            });
-                            this.doReload();
-                        },
+                        }
                     }]
                 }).show();
                 break;
