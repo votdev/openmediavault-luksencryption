@@ -82,7 +82,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Enumerate all LUKS containers on the system.
         if (FALSE === ($devs = OMVLuksContainers::enumerate())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Failed to get list of encrypted devices"));
+                gettext("Unable to get list of encrypted devices"));
         }
         $result = array();
         foreach($devs as $devk => $devv) {
@@ -171,7 +171,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Get a list of all potential usable devices.
         if (FALSE === ($devs = OMVStorageDevices::enumerateUnused())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Failed to get list of devices"));
+                gettext("Unable to get a list of unused devices"));
         }
         // Prepare the result list.
         $result = array();
@@ -461,7 +461,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($sd->getDeviceFile());
         if (!$luks->create($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to create encrypted device: %s"),
+                gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
@@ -503,7 +503,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Remove the container.
         if (!$luks->remove()) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to remove the encrypted device: %s"),
+                gettext("Unable to remove the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
@@ -591,7 +591,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Change passphrase.
         if (!$luks->addKey($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to add the passphrase to the encrypted device: %s"),
+                gettext("Unable to add the passphrase to the encrypted device: %s"),
                 $luks->getLastError()));
         }
     }
@@ -631,7 +631,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Change passphrase.
         if (!$luks->changeKey($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to change the passphrase for the encrypted device: %s"),
+                gettext("Unable to change the passphrase for the encrypted device: %s"),
                 $luks->getLastError()));
         }
     }
@@ -689,7 +689,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("Failed to remove the key from the encrypted device: %s"),
+                sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
                         $luks->getLastError()));
         }
     }
@@ -754,11 +754,15 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     }
 
     /**
-     * Kill a keyslot on the container.
+     * Kill a key slot on the container.
      * @param params An array containing the following fields:
+     *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The device file of the container to modify.
-     *     \em passphrase A current passphrase that will unlock the device.
-     *     \em keyslot A number from 0-7 representing which keyslot to kill.
+     *     \em keyslot A number from 0-7 representing which key slot to kill.
+     *      And containing either passphrase or filename/path fields:
+     *     \em passphrase The passphrase to unlock the device.
+     *     \em filename The filename of the key file to unlock the device.
+     *     \em filepath Path to the uploaded key file.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
@@ -773,23 +777,40 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"},
-                "keyslot":{ "type": "integer", "minimum":0, "maximum":7 }
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "filename":	    {"type":"string", "optional":"true"},
+                "filepath":	    {"type":"string", "optional":"true"},
+                "keyslot":      {"type": "integer", "minimum":0, "maximum":7}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("No encryption found on '%s'",
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Kill the keyslot.
-        if (!$luks->killKeySlot($params)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to kill the key slot on the encrypted device: %s"),
-                $luks->getLastError()));
+        // Kill the key slot
+        if(isset($params['filename'], $params['filepath'])) {
+            // Remove key file
+            $success = $luks->killSlotWithKeyFile($params);
+            // As an added precaution, shred the key file
+            // before it is removed when cleaning up.
+            $cmd = sprintf("export LANG=C; shred %s ",
+                            escapeshellarg($params['filepath']));
+            @OMVUtil::exec($cmd, $output, $result);
+            if ($result !== 0)
+                $this->debug($output);
+        } else {
+            // Remove passphrase
+            $success = $luks->killSlotWithPassphrase($params);
+        }
+        if ($success === FALSE) {
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                sprintf(gettext("Unable to erase the key slot on the encrypted device: %s"),
+                        $luks->getLastError()));
         }
     }
 
@@ -830,7 +851,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $params['backupfile'] = $tmpFilePath;
         if (!$luks->backupHeader($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to extract the LUKS header from ".
+                gettext("Unable to extract the LUKS header from ".
                         "the encrypted device: %s"),
                 $luks->getLastError()));
         }
@@ -926,7 +947,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $luks = new OMVLuksContainer($params['devicefile']);
         if (!$luks->restoreHeader($params)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to restore the LUKS header to ".
+                gettext("Unable to restore the LUKS header to ".
                         "device %s: %s"),
                 $params['devicefile'],
                 $luks->getLastError()));

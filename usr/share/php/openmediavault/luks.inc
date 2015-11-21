@@ -582,13 +582,13 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Remove a key filefrom the container.
+     * Remove a key file from the container.
      * @param params An array containing the following fields:
      *   \em filepath Path to a key file to remove from the device.
      * @return TRUE if successful, otherwise FALSE.
      */
     public function removeKeyFile($params) {
-        $cmd = sprintf("export LANG=C; cryptsetup luksRemoveKey ".
+        $cmd = sprintf("export LANG=C; cryptsetup luksRemoveKey -q ".
                         "%s --key-file %s 2>&1",
                         escapeshellarg($this->getDeviceFile()),
                         escapeshellarg($params['filepath']));
@@ -602,21 +602,48 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Kill a keyslot - remove a key from the container without
-     * knowing it (cf. removeKey)
-     * @param params An array containing the following fields:
-     *   \em passphrase A passphrase that unlocks the device.
-     *   \em keyslot A number from 0-7 representing which keyslot to remove
-     *           (this could be any keyslot, e.g. the one corresponding to
-     *           the supplied key/passphrase, or a different one).
-     * @return TRUE if successful, otherwise FALSE.
+    * Kill a key slot using a passphrase - remove a key from the container
+    * without knowing it (cf. removePassphrase/removeKeyFile) by supplying
+    * an existing passphrase.
+    * @param params An array containing the following fields:
+    *   \em passphrase A passphrase that unlocks the device.
+    *   \em keyslot A number from 0-7 representing which keyslot to remove
+    *           (this could be any key slot, e.g. the one corresponding to
+    *           the supplied key/passphrase, or a different one).
+    * @return TRUE if successful, otherwise FALSE.
      */
-    public function killKeySlot($params) {
+    public function killSlotWithPassphrase($params) {
         $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksRemoveKey %s %s --key-file=- 2>&1'",
+                        "| cryptsetup luksKillSlot %s %s --key-file=- 2>&1'",
                         escapeshellarg($params['passphrase']),
                         escapeshellarg($this->getDeviceFile()),
                         escapeshellarg($params['keyslot']));
+        @OMVUtil::exec($cmd, $output, $result);
+        if ($result !== 0) {
+            $this->setLastError($output);
+            return FALSE;
+        }
+        $this->refresh();
+        return TRUE;
+    }
+
+    /**
+    * Kill a key slot using a key file - remove a key from the container
+    * without knowing it (cf. removePassphrase/removeKeyFile) by supplying
+    * an existing key file.
+    * @param params An array containing the following fields:
+    *   \em filepath Path to a key file that unlocks the device.
+    *   \em keyslot A number from 0-7 representing which keyslot to remove
+    *           (this could be any key slot, e.g. the one corresponding to
+    *           the supplied key/passphrase, or a different one).
+    * @return TRUE if successful, otherwise FALSE.
+     */
+    public function killSlotWithKeyFile($params) {
+        $cmd = sprintf("/bin/bash -c 'export LANG=C; cryptsetup ".
+                        "luksKillSlot -q %s %s --key-file %s 2>&1'",
+                        escapeshellarg($this->getDeviceFile()),
+                        escapeshellarg($params['keyslot']),
+                        escapeshellarg($params['filepath']));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);

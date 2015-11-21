@@ -1,6 +1,6 @@
 openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
 
-  * Key file support for unlocking, test and remove keys functions.
+  * Key file support for unlocking, test key, remove key, and erase (kill) slot functions.
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 19 Nov 2015 17:17:01 +0000
 
