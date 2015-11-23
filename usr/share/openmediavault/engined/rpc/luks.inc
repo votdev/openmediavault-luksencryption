@@ -279,7 +279,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         if (FALSE === $luks->isOpen()) {
             if(isset($params['filename'], $params['filepath'])) {
                 // Test key file
-                $success = $luks->openWithKeyFile($params);
+                $success = $luks->open($params['filepath'], TRUE);
                 // As an added precaution, shred the key file
                 // before it is removed when cleaning up.
                 $cmd = sprintf("export LANG=C; shred %s ",
@@ -289,7 +289,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                     $this->debug($output);
             } else {
                 // Test passphrase
-                $success = $luks->openWithPassphrase($params);
+                $success = $luks->open($params['passphrase']);
             }
             if ($success === FALSE) {
                 throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
@@ -315,19 +315,47 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                          * it if it's not ready (not all devices are available,
                          * e.g. if more containers must be unlocked first, wait
                          * until they are all open).
-                         * Note that this only works for the first time devices
-                         * are opened - even if LUKS devices that are part of a
-                         * multi-device BTRFS filesystem are later closed, some
-                         * information is cached and so btrfs subsequently
-                         * always reports the filesystem as ready.
+                         * Note: using 'btrfs device ready' only works for the
+                         * first time devices are opened - even if LUKS devices
+                         * that are part of a multi-device BTRFS filesystem are
+                         * later closed, some information is cached and so btrfs
+                         * subsequently always reports the filesystem as ready.
+                         * Hence, this workaround checks the number of devices
+                         * online for the filesystem via 'btrfs filesystem show'
+                         * instead, which should be more reliable.
+                         * TODO: submit a patch to the core BTRFS backend that
+                         * exposes this in a class function instead?
                          */
-                        $cmd = sprintf("export LANG=C; btrfs device ready %s",
-                                        $luks->getDecryptedDeviceFile());
+                        // Find out how many devices are in the filesystem
+                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                        "show %s | grep 'Total devices' | ".
+                                        "awk '{print $3}'",
+                                        escapeshellarg($meObject['uuid']));
                         @OMVUtil::exec($cmd, $output, $result);
                         if($result !== 0) {
                             $this->setLastError($output);
                             continue;
                         }
+                        $totalDevices = (int)$output[0];
+                        // If the fs has fewer than one device (an error
+                        // of some kind occurred), skip mounting
+                        if($totalDevices < 1)
+                            continue;
+                        unset($cmd, $output, $result);
+                        // Find out how many are online
+                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                        "show %s | grep 'devid' | wc -l",
+                                        escapeshellarg($meObject['uuid']));
+                        @OMVUtil::exec($cmd, $output, $result);
+                        if($result !== 0) {
+                            $this->setLastError($output);
+                            continue;
+                        }
+                        $availableDevices = (int)$output[0];
+                        // If not all devices are online, skip mounting
+                        if($availableDevices !== $totalDevices)
+                            continue;
+                        unset($cmd, $output, $result);
                     case "ext2":
                     case "ext3":
                     case "ext4":
@@ -459,7 +487,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Create the container.
         $luks = new OMVLuksContainer($sd->getDeviceFile());
-        if (!$luks->create($params)) {
+        if (!$luks->create($sd->getDeviceFile(), $params['passphrase'])) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
@@ -675,7 +703,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Remove the key
         if(isset($params['filename'], $params['filepath'])) {
             // Remove key file
-            $success = $luks->removeKeyFile($params);
+            $success = $luks->removeKey($params['filepath'], TRUE);
             // As an added precaution, shred the key file
             // before it is removed when cleaning up.
             $cmd = sprintf("export LANG=C; shred %s ",
@@ -685,7 +713,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 $this->debug($output);
         } else {
             // Remove passphrase
-            $success = $luks->removePassphrase($params);
+            $success = $luks->removeKey($params['passphrase']);
         }
         if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
@@ -734,7 +762,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Test the key
         if(isset($params['filename'], $params['filepath'])) {
             // Test key file
-            $slot = $luks->testKeyFile($params);
+            $slot = $luks->testKey($params['filepath'], TRUE);
             // As an added precaution, shred the key file
             // before it is removed when cleaning up.
             $cmd = sprintf("export LANG=C; shred %s ",
@@ -743,7 +771,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             if ($result !== 0)
                 $this->debug($output);
         } else {
-            $slot = $luks->testPassphrase($params);
+            $slot = $luks->testKey($params['passphrase']);
         }
         if ($slot === FALSE) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
@@ -754,15 +782,11 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     }
 
     /**
-     * Kill a key slot on the container.
+     * Erase (kill) a key slot on the container.
      * @param params An array containing the following fields:
      *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The device file of the container to modify.
      *     \em keyslot A number from 0-7 representing which key slot to kill.
-     *      And containing either passphrase or filename/path fields:
-     *     \em passphrase The passphrase to unlock the device.
-     *     \em filename The filename of the key file to unlock the device.
-     *     \em filepath Path to the uploaded key file.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
@@ -779,10 +803,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             "properties":{
                 "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                 "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":	{"type":"string", "optional":"true"},
-                "filename":	    {"type":"string", "optional":"true"},
-                "filepath":	    {"type":"string", "optional":"true"},
-                "keyslot":      {"type": "integer", "minimum":0, "maximum":7}
+                "keyslot":      { "type": "integer", "minimum":0, "maximum":7 }
             }
         }');
         // Validate the container
@@ -792,25 +813,11 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Kill the key slot
-        if(isset($params['filename'], $params['filepath'])) {
-            // Remove key file
-            $success = $luks->killSlotWithKeyFile($params);
-            // As an added precaution, shred the key file
-            // before it is removed when cleaning up.
-            $cmd = sprintf("export LANG=C; shred %s ",
-                            escapeshellarg($params['filepath']));
-            @OMVUtil::exec($cmd, $output, $result);
-            if ($result !== 0)
-                $this->debug($output);
-        } else {
-            // Remove passphrase
-            $success = $luks->killSlotWithPassphrase($params);
-        }
-        if ($success === FALSE) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("Unable to erase the key slot on the encrypted device: %s"),
-                        $luks->getLastError()));
+        // Kill the key slot.
+        if (!$luks->killSlot($params['keyslot'])) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_FAILED, sprintf(
+                gettext("Unable to erase the key slot on the encrypted device: %s"),
+                $luks->getLastError()));
         }
     }
 
@@ -848,8 +855,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Extract the header to a temporary location and modify the
         // file mode/owner to allow the WebGUI PHP backend to unlink it.
         $tmpFilePath = sys_get_temp_dir()."/".uniqid("luksHeader");
-        $params['backupfile'] = $tmpFilePath;
-        if (!$luks->backupHeader($params)) {
+        if (!$luks->backupHeader($tmpFilePath)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to extract the LUKS header from ".
                         "the encrypted device: %s"),
@@ -885,7 +891,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @throw E_EXEC_FAILED
      */
     public function restoreContainerHeader($params, $context) {
-        print_r($params);
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -945,7 +950,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Write the header to the device
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (!$luks->restoreHeader($params)) {
+        if (!$luks->restoreHeader($params['filepath'])) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to restore the LUKS header to ".
                         "device %s: %s"),

@@ -48,6 +48,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
 
     title: _("Create encrypted device"),
     okButtonText: _("OK"),
+    submitMsg: _("Creating encrypted device ..."), //override
     hideResetButton: true,
     width: 500,
     rpcService: "LuksMgmt",
@@ -141,8 +142,7 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
 
 /**
  * Generalized class for providing a single key - used to
- * unlock a device or test if a key works, remove a key, or 
- * erase (kill) a key slot.
+ * unlock a device, test if a key works, or to remove a key.
  * @class OMV.module.admin.storage.luks.container.SingleKey
  * @derived OMV.workspace.window.Form
  * @param uuid The UUID of the configuration object.
@@ -156,7 +156,6 @@ Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
     // title: _("Unlock encrypted device"), //override
     // okButtonText: _("Unlock"), // override
     // submitMsg: _("Unlocking ..."), //override
-    // showKeySlot: false, //override
     keyFileUrl: "upload.php",
     autoLoadData: false,
     hideResetButton: true,
@@ -216,36 +215,12 @@ Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
                     specialkey: me.submitOnEnter
                 }
             }]
-        },{
-            xtype: "numberfield",
-            name: "keyslot",
-            fieldLabel: _("Key slot"),
-            emptyText: _("Choose a slot (0-7) to erase ..."),
-            minValue: 0,
-            maxValue: 7,
-            allowDecimals: false,
-            allowBlank: true,
-            submitValue: false,
-            hidden: true,
-            plugins: [{
-                    ptype: "fieldinfo",
-                    text: _("The key slot to erase. Use the 'Test key' or 'Detail' functions to find out which slot you want to destroy.")
-            }],
-            listeners: {
-                scope: me,
-                specialkey: me.submitOnEnter
-            }
         }];
     },
 
     initComponent: function() {
         var me = this;
         me.callParent(arguments);
-        if(me.showKeySlot) {
-            var field = me.fp.findField("keyslot");
-            field.allowBlank = false;
-            field.show();
-        }
         me.on("show", function() {
                        // Set focus to field 'Passphrase'.
                        var field = me.fp.findField("passphrase");
@@ -293,8 +268,6 @@ Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
     getRpcSetParams: function() {
         var me = this;
         var params = me.callParent(arguments);
-        if(me.showKeySlot)
-            me.params.keyslot = me.fp.findField("keyslot").value;
         return Ext.apply(params, {
             uuid: me.params.uuid,
             devicefile: me.params.devicefile
@@ -326,8 +299,6 @@ Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
     doUpload: function() {
         var me = this;
         var basicForm = me.fp.getForm();
-        if(me.showKeySlot)
-            me.params.keyslot = me.fp.findField("keyslot").value;
         me.setLoading(me.submitMsg);
         basicForm.submit({
             url: me.keyFileUrl,
@@ -659,6 +630,126 @@ Ext.define("OMV.module.admin.storage.luks.container.ChangePassphrase", {
 
 
 /**
+ * @class OMV.module.admin.storage.luks.container.KillSlot
+ * @derived OMV.workspace.window.Form
+ * @param uuid The UUID of the configuration object.
+ * @param devicefile The device file, e.g. /dev/sda.
+ */
+Ext.define("OMV.module.admin.storage.luks.container.KillSlot", {
+    extend: "OMV.workspace.window.Form",
+
+    rpcService: "LuksMgmt",
+    rpcSetMethod: "killContainerKeySlot",
+    title: _("Erase key slot"),
+    okButtonText: _("Erase"),
+    autoLoadData: false,
+    hideResetButton: true,
+    width: 500,
+
+    initComponent: function() {
+        var me = this;
+        me.callParent(arguments);
+        me.on("show", function() {
+                       // Set focus to field 'keyslot'.
+                       var field = me.fp.findField("keyslot");
+                       if (!Ext.isEmpty(field))
+                               field.focus(false, 500);
+               }, me);
+    },
+
+    getFormItems: function() {
+        var me = this;
+        return [{
+            xtype: "textfield",
+            name: "devicefile",
+            fieldLabel: _("Device"),
+            allowBlank: false,
+            readOnly: true,
+            value: me.params.devicefile,
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
+        },{
+            xtype: "numberfield",
+            name: "keyslot",
+            fieldLabel: _("Key slot"),
+            emptyText: _("Choose a slot to erase ..."),
+            minValue: 0,
+            maxValue: 7,
+            allowDecimals: false,
+            allowBlank: false,
+            plugins: [{
+                    ptype: "fieldinfo",
+                    text: _("The key slot to erase (0-7). Use the 'Test key' or 'Detail' functions to decide which slot you want to destroy.")
+            }],
+            listeners: {
+                scope: me,
+                specialkey: me.submitOnEnter
+            }
+        }];
+    },
+
+    doSubmit: function() {
+        var me = this;
+        var basicForm = me.fp.getForm();
+        if(!basicForm.isValid())
+            return;
+        OMV.MessageBox.show({
+            title: _("Confirmation"),
+            msg: _("Do you really want to erase this key slot? Ensure that you have another key which will unlock the device."),
+            buttons: Ext.Msg.YESNO,
+            fn: function(answer) {
+                if(answer === "no")
+                    return;
+                if(me.params.usedslots == 1)
+                    OMV.MessageBox.show({
+                        title: _("Erase key slot"),
+                        msg: _("Are you really sure? The device has only one active key slot; removing the last key renders the device permanently inaccessible."),
+                        icon: Ext.Msg.WARNING,
+                        buttonText: {
+                            yes: _("No"),
+                            no: _("Yes")
+                        },
+                        scope: me,
+                        fn: function(answer) {
+                            switch(answer) {
+                            case "no": // Attention, switched buttons.
+                                me.superclass.doSubmit.call(me);
+                                break;
+                            default:
+                                return;
+                                break;
+                            }
+                        }
+                    });
+                else
+                    me.superclass.doSubmit.call(me);
+            },
+            scope: me,
+            icon: Ext.Msg.QUESTION
+        });
+    },
+
+    getRpcSetParams: function() {
+        var me = this;
+        var params = me.callParent(arguments);
+        return Ext.apply(params, {
+            uuid: me.params.uuid,
+            devicefile: me.params.devicefile
+        });
+    },
+
+    submitOnEnter: function(field, event) {
+        var me = this;
+        if (event.getKey() == event.ENTER) {
+            me.superclass.onOkButton.call(me);
+        }
+    }
+});
+
+
+/**
  * @class OMV.module.admin.storage.luks.container.Detail
  * @derived OMV.workspace.window.TextArea
  */
@@ -879,10 +970,10 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
     uses: [
         "OMV.module.admin.storage.luks.container.Create",
         "OMV.module.admin.storage.luks.container.Detail",
-        "OMV.module.admin.storage.luks.container.Passphrase",
+        "OMV.module.admin.storage.luks.container.SingleKey",
+        "OMV.module.admin.storage.luks.container.KillSlot",
         "OMV.module.admin.storage.luks.container.AddPassphrase",
         "OMV.module.admin.storage.luks.container.ChangePassphrase",
-        "OMV.module.admin.storage.luks.container.RemovePassphrase",
         "OMV.module.admin.storage.luks.container.RestoreHeader"
     ],
 
@@ -1297,7 +1388,8 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                     rpcSetMethod:   "removeContainerKey",
                     params: {
                         uuid:       record.get("uuid"),
-                        devicefile: record.get("devicefile")
+                        devicefile: record.get("devicefile"),
+                        usedslots:  record.get("usedslots")
                     },
                     listeners: [{
                         scope: me,
@@ -1314,7 +1406,29 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                                 fn: function(answer) {
                                     if(answer === "no")
                                         return;
-                                    you.doSubmit();
+                                    if(me.params.usedslots == 1)
+                                        OMV.MessageBox.show({
+                                            title: _("Remove key"),
+                                            msg: _("Are you really sure? The device has only one active key slot; removing the last key renders the device permanently inaccessible."),
+                                            icon: Ext.Msg.WARNING,
+                                            buttonText: {
+                                                yes: _("No"),
+                                                no: _("Yes")
+                                            },
+                                            scope: me,
+                                            fn: function(answer) {
+                                                switch(answer) {
+                                                case "no": // Attention, switched buttons.
+                                                    you.doSubmit();
+                                                    break;
+                                                default:
+                                                    return;
+                                                    break;
+                                                }
+                                            }
+                                        });
+                                    else
+                                        you.doSubmit();
                                 },
                                 scope: me,
                                 icon: Ext.Msg.QUESTION
@@ -1350,38 +1464,18 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 }).show();
                 break;
             case "kill":
-                Ext.create("OMV.module.admin.storage.luks.container.SingleKey", {
-                    title:          _("Erase key slot"),
-                    okButtonText:   _("Erase"),
-                    rpcSetMethod:   "killContainerKeySlot",
-                    showKeySlot:    true,
+                Ext.create("OMV.module.admin.storage.luks.container.KillSlot", {
                     params: {
                         uuid:       record.get("uuid"),
-                        devicefile: record.get("devicefile")
+                        devicefile: record.get("devicefile"),
+                        usedslots:  record.get("usedslots")
                     },
-                    listeners: [{
+                    listeners: {
                         scope: me,
                         submit: function() {
                             this.doReload();
                         }
-                    },{
-                        scope: me,
-                        askconfirmation: function(you) {
-                            OMV.MessageBox.show({
-                                title: _("Confirmation"),
-                                msg: _("Do you really want to erase this key slot? Ensure that you have another key which will unlock the device."),
-                                buttons: Ext.Msg.YESNO,
-                                fn: function(answer) {
-                                    if(answer === "no")
-                                        return;
-                                    you.doSubmit();
-                                },
-                                scope: me,
-                                icon: Ext.Msg.QUESTION
-                            });
-                            return false; // pass control to the messagebox
-                        }
-                    }]
+                    }
                 }).show();
                 break;
         }
