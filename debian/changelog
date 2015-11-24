@@ -1,6 +1,6 @@
 openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
 
-  * Key file support for unlocking, test and remove keys functions.
+  * Key file support for unlocking, test, add, change, and remove keys functions.
   * Kill slot renamed to erase slot.
   * Kill (erase) slot now done without key verification (batch-mode).
   * Warning added when removing the last key.

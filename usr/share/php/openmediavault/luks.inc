@@ -505,21 +505,54 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Add a key (passphrase) to the container.
-     * @param params An array containing the following fields:
-     *   \em oldpassphrase A passphrase that unlocks the device.
-     *   \em newpassphrase The new passphrase to add.
+     * Add a key to the container.
+     * @param old A passphrase or key file (see following) that unlocks the device.
+     * @param new A passphrase or key file (see following) to add to the device.
+     * @param oldIsKeyFile Optional. A boolean indicating whether the param 'old'
+     *                  is a passphrase (FALSE, in which case old is a string),
+     *                  or a key file (TRUE, in which case old is a filepath to
+     *                  the key file). Defaults to FALSE.
+     * @param newIsKeyFile Optional. A boolean indicating whether the param 'new'
+     *                  is a passphrase (FALSE, in which case new is a string),
+     *                  or a key file (TRUE, in which case new is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function addKey($params) {
+    public function addKey(
+                            $old,
+                            $new,
+                            $oldIsKeyFile=FALSE,
+                            $newIsKeyFile=FALSE
+                          ) {
+        // Build command line
+        $cmd = "export LANG=C; ";
+        switch($oldIsKeyFile) {
+            case TRUE:
+                $cmd .= sprintf("cryptsetup luksAddKey -q ".
+                            "%s --key-file %s ",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($old));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("echo -n %s | cryptsetup luksAddKey -q ".
+                            " %s --key-file=- ",
+                            escapeshellarg($old),
+                            escapeshellarg($this->getDeviceFile()));
+        }
+        switch($newIsKeyFile) {
+            case TRUE:
+                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        }
         // N.B. Need to use bash rather than default sh here for
         // process substitution method of injecting new passphrase
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksAddKey %s --key-file=- ".
-                        "<(echo -n %s) 2>&1'",
-                        escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($params['newpassphrase']));
+        if(FALSE === $newIsKeyFile)
+            $cmd = "/bin/bash -c '".$cmd."'";
+        // Execute
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -530,19 +563,54 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Change a key (passphrase) for the container.
-     * @param params An array containing the following fields:
-     *   \em oldpassphrase The passphrase to unlock the device.
-     *   \em newpassphrase The new passphrase to replace the old one with.
+     * Change a key that unlocks the container.
+     * @param old A passphrase or key file (see following) that unlocks the device.
+     * @param new The passphrase or key file (see following) to replace the old one.
+     * @param oldIsKeyFile Optional. A boolean indicating whether the param 'old'
+     *                  is a passphrase (FALSE, in which case old is a string),
+     *                  or a key file (TRUE, in which case old is a filepath to
+     *                  the key file). Defaults to FALSE.
+     * @param newIsKeyFile Optional. A boolean indicating whether the param 'new'
+     *                  is a passphrase (FALSE, in which case new is a string),
+     *                  or a key file (TRUE, in which case new is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function changeKey($params) {
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksChangeKey %s --key-file=- ".
-                        "<(echo -n %s) 2>&1'",
-                        escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($params['newpassphrase']));
+    public function changeKey(
+                            $old,
+                            $new,
+                            $oldIsKeyFile=FALSE,
+                            $newIsKeyFile=FALSE
+                          ) {
+        // Build command line
+        $cmd = "export LANG=C; ";
+        switch($oldIsKeyFile) {
+            case TRUE:
+                $cmd .= sprintf("cryptsetup luksChangeKey -q ".
+                            "%s --key-file %s ",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($old));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("echo -n %s | cryptsetup luksChangeKey -q ".
+                            " %s --key-file=- ",
+                            escapeshellarg($old),
+                            escapeshellarg($this->getDeviceFile()));
+        }
+        switch($newIsKeyFile) {
+            case TRUE:
+                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        }
+        // N.B. Need to use bash rather than default sh here for
+        // process substitution method of injecting new passphrase
+        if(FALSE === $newIsKeyFile)
+            $cmd = "/bin/bash -c '".$cmd."'";
+        // Execute
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
