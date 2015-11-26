@@ -242,10 +242,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @param params An array containing the following fields:
      *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The block special device of the LUKS container to open.
-     *      And containing either passphrase or filename/path fields:
+     *      And containing either passphrase or key file fields:
      *     \em passphrase The passphrase to unlock the device.
-     *     \em filename The filename of the key file to unlock the device.
-     *     \em filepath Path to the uploaded key file.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None
      * @throw E_MISC_FAILURE
@@ -264,8 +263,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                 "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
                 "passphrase":	{"type":"string", "optional":"true"},
-                "filename":	    {"type":"string", "optional":"true"},
-                "filepath":	    {"type":"string", "optional":"true"}
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Validate the container
@@ -278,20 +276,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Check that the container is not already open, then use
         // the supplied passphrase or key file to unlock it if not.
         if (FALSE === $luks->isOpen()) {
-            if(isset($params['filename'], $params['filepath'])) {
-                // Test key file
-                $success = $luks->open($params['filepath'], TRUE);
-                // As an added precaution, shred the key file
-                // before it is removed when cleaning up.
-                $cmd = sprintf("export LANG=C; shred %s ",
-                                escapeshellarg($params['filepath']));
-                @OMVUtil::exec($cmd, $output, $result);
-                if ($result !== 0)
-                    $this->debug($output);
-            } else {
-                // Test passphrase
+            if(isset($params['keyfile']) && !empty($params['keyfile']))
+                $success = $luks->open($params['keyfile'], TRUE);
+            else
                 $success = $luks->open($params['passphrase']);
-            }
             if ($success === FALSE) {
                 throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                     sprintf(gettext("Unable to unlock encrypted device: %s"),
@@ -424,7 +412,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * Create a LUKS container.
      * @param params An array containing the following fields:
      *     \em devicefile The device file where to create the LUKS container.
+     *     And containing either passphrase or key file fields:
      *     \em passphrase The passphrase to unlock the device.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_DEVICE_NOT_FOUND
@@ -441,8 +431,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type": "string"}
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Get the storage device object.
@@ -491,7 +482,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Create the container.
         $luks = new OMVLuksContainer($sd->getDeviceFile());
-        if (!$luks->create($sd->getDeviceFile(), $params['passphrase'])) {
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $success = $luks->create($sd->getDeviceFile(),
+                                     $params['keyfile'],
+                                     TRUE);
+        else
+            $success = $luks->open($sd->getDeviceFile(), $params['passphrase']);
+        if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
@@ -614,7 +611,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             "properties":{
                 "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                 "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "MAX_FILE_SIZE":    {"type":"string", "optional":"true"},
                 "oldpassphrase":    {"type":"string", "optional":"true"},
                 "newpassphrase":    {"type":"string", "optional":"true"},
                 "oldkeyfile":       {"type":"string", "optional":"true"},
@@ -629,14 +625,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Build the command depending on the mix of passphrases and key files
-        if(isset($params['oldkeyfile'])) {
+        if(isset($params['oldkeyfile']) && !empty($params['oldkeyfile'])) {
             $old = $params['oldkeyfile'];
             $oldIsKeyFile = TRUE;
         } else {
             $old = $params['oldpassphrase'];
             $oldIsKeyFile = FALSE;
         }
-        if(isset($params['newkeyfile'])) {
+        if(isset($params['newkeyfile']) && !empty($params['newkeyfile'])) {
             $new = $params['newkeyfile'];
             $newIsKeyFile = TRUE;
         } else {
@@ -649,8 +645,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 sprintf(gettext("Unable to add the key to the encrypted device: %s"),
                         $luks->getLastError()));
         }
-        // No need to shred key files here, as
-        // OMVUploadMultiFileRpcProxy will do that.
     }
 
     /**
@@ -679,7 +673,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             "properties":{
                 "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                 "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "MAX_FILE_SIZE":    {"type":"string", "optional":"true"},
                 "oldpassphrase":    {"type":"string", "optional":"true"},
                 "newpassphrase":    {"type":"string", "optional":"true"},
                 "oldkeyfile":       {"type":"string", "optional":"true"},
@@ -694,14 +687,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Build the command depending on the mix of passphrases and key files
-        if(isset($params['oldkeyfile'])) {
+        if(isset($params['oldkeyfile']) && !empty($params['oldkeyfile'])) {
             $old = $params['oldkeyfile'];
             $oldIsKeyFile = TRUE;
         } else {
             $old = $params['oldpassphrase'];
             $oldIsKeyFile = FALSE;
         }
-        if(isset($params['newkeyfile'])) {
+        if(isset($params['newkeyfile']) && !empty($params['newkeyfile'])) {
             $new = $params['newkeyfile'];
             $newIsKeyFile = TRUE;
         } else {
@@ -714,8 +707,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 sprintf(gettext("Unable to change the key on the encrypted device: %s"),
                         $luks->getLastError()));
         }
-        // No need to shred key files here, as
-        // OMVUploadMultiFileRpcProxy will do that.
     }
 
     /**
@@ -725,8 +716,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     \em devicefile The block special device of the LUKS container to modify.
      *      And containing either passphrase or filename/path fields:
      *     \em passphrase The passphrase to remove from the device.
-     *     \em filename The filename of the key file to remove from the device.
-     *     \em filepath Path to the uploaded key file.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
@@ -745,8 +735,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
                 "usedslots":    {"type":"integer", "optional":"true"},
                 "passphrase":	{"type":"string", "optional":"true"},
-                "filename":	    {"type":"string", "optional":"true"},
-                "filepath":	    {"type":"string", "optional":"true"}
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Validate the container
@@ -757,20 +746,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Remove the key
-        if(isset($params['filename'], $params['filepath'])) {
-            // Remove key file
-            $success = $luks->removeKey($params['filepath'], TRUE);
-            // As an added precaution, shred the key file
-            // before it is removed when cleaning up.
-            $cmd = sprintf("export LANG=C; shred %s ",
-                            escapeshellarg($params['filepath']));
-            @OMVUtil::exec($cmd, $output, $result);
-            if ($result !== 0)
-                $this->debug($output);
-        } else {
-            // Remove passphrase
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $success = $luks->removeKey($params['keyfile'], TRUE);
+        else
             $success = $luks->removeKey($params['passphrase']);
-        }
         if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                 sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
@@ -783,10 +762,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @param params An array containing the following fields:
      *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The block special device of the LUKS container to open.
-     *      And containing either passphrase or filename/path fields:
+     *      And containing either passphrase or key file fields:
      *     \em passphrase The passphrase to unlock the device.
-     *     \em filename The filename of the key file to unlock the device.
-     *     \em filepath Path to the uploaded key file.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return An integer from 0-7 representing which keyslot the
      *          passphrase successfully unlocked, otherwise none.
@@ -805,8 +783,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
                 "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
                 "passphrase":	{"type":"string", "optional":"true"},
-                "filename":	    {"type":"string", "optional":"true"},
-                "filepath":	    {"type":"string", "optional":"true"}
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Validate the container
@@ -817,19 +794,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Test the key
-        if(isset($params['filename'], $params['filepath'])) {
-            // Test key file
-            $slot = $luks->testKey($params['filepath'], TRUE);
-            // As an added precaution, shred the key file
-            // before it is removed when cleaning up.
-            $cmd = sprintf("export LANG=C; shred %s ",
-                            escapeshellarg($params['filepath']));
-            @OMVUtil::exec($cmd, $output, $result);
-            if ($result !== 0)
-                $this->debug($output);
-        } else {
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $slot = $luks->testKey($params['keyfile'], TRUE);
+        else
             $slot = $luks->testKey($params['passphrase']);
-        }
         if ($slot === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
               sprintf(gettext("The key did not unlock any key slot on the device")));

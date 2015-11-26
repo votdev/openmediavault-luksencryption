@@ -1,11 +1,12 @@
 openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
 
-  * Key file support for unlocking, test, add, change, and remove keys functions.
+  * Key file support.
   * Kill slot renamed to erase slot.
   * Kill (erase) slot now done without key verification (batch-mode).
   * Warning added when removing the last key.
   * Check for multi-device BTRFS filesystems when auto-mounting improved.
   * Dependency updated now that OMV 2.1.19 is out.
+  * Dependency updated to require omv-extras plugin >=2.9 for custom (multi-file) upload.
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 19 Nov 2015 17:17:01 +0000
 
