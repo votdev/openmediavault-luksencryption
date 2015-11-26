@@ -1,4 +1,4 @@
-openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
+openmediavault-luksencryption (2.0.0) unstable; urgency=medium
 
   * Key file support.
   * Kill slot renamed to erase slot.
@@ -7,8 +7,9 @@ openmediavault-luksencryption (2.0.0) UNRELEASED; urgency=medium
   * Check for multi-device BTRFS filesystems when auto-mounting improved.
   * Dependency updated now that OMV 2.1.19 is out.
   * Dependency updated to require omv-extras plugin >=2.9 for custom (multi-file) upload.
+  * Update locales
 
- -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 19 Nov 2015 17:17:01 +0000
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 26 Nov 2015 09:19:02 -0600
 
 openmediavault-luksencryption (1.4.0) unstable; urgency=medium
 
