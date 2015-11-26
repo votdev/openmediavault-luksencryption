@@ -353,16 +353,29 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
     /**
      * Create the container.
-     * @param params An array containing the following fields:
-     *   \em devicefile The device file where to create the LUKS container.
-     *   \em passphrase The passphrase to unlock the device.
+     * @param devicefile The device file where to create the LUKS container.
+     * @param key A passphrase or key file (see following)
+     * @param keyIsFile Optional. A boolean indicating whether the param 'key'
+     *                  is a passphrase (FALSE, in which case key is a string),
+     *                  or a key file (TRUE, in which case key is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function create($params) {
-        $cmd = sprintf("export LANG=C; echo -n %s ".
-                        "| cryptsetup luksFormat %s - 2>&1",
-                        escapeshellarg($params['passphrase']),
-                        escapeshellarg($params['devicefile']));
+    public function create($devicefile, $key, $keyIsFile=FALSE) {
+        switch($keyIsFile) {
+            case TRUE:
+                $cmd = sprintf("export LANG=C; cryptsetup luksFormat %s ".
+                            "--key-file %s 2>&1",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($key));
+                break;
+            case FALSE:
+            default:
+                $cmd = sprintf("export LANG=C; echo -n %s | ".
+                            "cryptsetup luksFormat %s --key-file=- 2>&1",
+                            escapeshellarg($key),
+                            escapeshellarg($this->getDeviceFile()));
+        }
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -450,18 +463,33 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
     /**
      * Open (unlock) the container.
-     * @param params An array containing the following fields:
-     *   \em passphrase A passphrase that will unlock the LUKS device.
+     * @param key A passphrase or key file (see following) which will unlock
+     *            the LUKS container.
+     * @param keyIsFile Optional. A boolean indicating whether the param 'key'
+     *                  is a passphrase (FALSE, in which case key is a string),
+     *                  or a key file (TRUE, in which case key is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      * TODO: change from using [dev]-crypt as the mapper name to the UUID of
      *       container instead (unique, probably will be needed for crypttab)
      */
-    public function open($params) {
-        $cmd = sprintf("export LANG=C; echo -n %s ".
-                        "| cryptsetup luksOpen %s %s-crypt --key-file=- 2>&1",
-                        escapeshellarg($params['passphrase']),
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($this->getDeviceName()));
+    public function open($key, $keyIsFile=FALSE) {
+        switch($keyIsFile) {
+            case TRUE:
+                $cmd = sprintf("export LANG=C; cryptsetup luksOpen %s ".
+                            "%s-crypt --key-file %s 2>&1",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($this->getDeviceName()),
+                            escapeshellarg($key));
+                break;
+            case FALSE:
+            default:
+                $cmd = sprintf("export LANG=C; echo -n %s | ".
+                            "cryptsetup luksOpen %s %s-crypt --key-file=- 2>&1",
+                            escapeshellarg($key),
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($this->getDeviceName()));
+        }
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -491,21 +519,52 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Add a key (passphrase) to the container.
-     * @param params An array containing the following fields:
-     *   \em oldpassphrase A passphrase that unlocks the device.
-     *   \em newpassphrase The new passphrase to add.
+     * Add a key to the container.
+     * @param old A passphrase or key file (see following) that unlocks the device.
+     * @param new A passphrase or key file (see following) to add to the device.
+     * @param oldIsFile Optional. A boolean indicating whether the param 'old'
+     *                  is a passphrase (FALSE, in which case old is a string),
+     *                  or a key file (TRUE, in which case old is a filepath to
+     *                  the key file). Defaults to FALSE.
+     * @param newIsFile Optional. A boolean indicating whether the param 'new'
+     *                  is a passphrase (FALSE, in which case new is a string),
+     *                  or a key file (TRUE, in which case new is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function addKey($params) {
+    public function addKey($old,
+                           $new,
+                           $oldIsFile=FALSE,
+                           $newIsFile=FALSE) {
+        // Build command line
+        $cmd = "export LANG=C; ";
+        switch($oldIsFile) {
+            case TRUE:
+                $cmd .= sprintf("cryptsetup luksAddKey -q ".
+                            "%s --key-file %s ",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($old));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("echo -n %s | cryptsetup luksAddKey -q ".
+                            " %s --key-file=- ",
+                            escapeshellarg($old),
+                            escapeshellarg($this->getDeviceFile()));
+        }
+        switch($newIsFile) {
+            case TRUE:
+                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        }
         // N.B. Need to use bash rather than default sh here for
         // process substitution method of injecting new passphrase
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksAddKey %s --key-file=- ".
-                        "<(echo -n %s) 2>&1'",
-                        escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($params['newpassphrase']));
+        if(FALSE === $newIsFile)
+            $cmd = "/bin/bash -c '".$cmd."'";
+        // Execute
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -516,19 +575,52 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Change a key (passphrase) for the container.
-     * @param params An array containing the following fields:
-     *   \em oldpassphrase The passphrase to unlock the device.
-     *   \em newpassphrase The new passphrase to replace the old one with.
+     * Change a key that unlocks the container.
+     * @param old A passphrase or key file (see following) that unlocks the device.
+     * @param new The passphrase or key file (see following) to replace the old one.
+     * @param oldIsFile Optional. A boolean indicating whether the param 'old'
+     *                  is a passphrase (FALSE, in which case old is a string),
+     *                  or a key file (TRUE, in which case old is a filepath to
+     *                  the key file). Defaults to FALSE.
+     * @param newIsFile Optional. A boolean indicating whether the param 'new'
+     *                  is a passphrase (FALSE, in which case new is a string),
+     *                  or a key file (TRUE, in which case new is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function changeKey($params) {
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksChangeKey %s --key-file=- ".
-                        "<(echo -n %s) 2>&1'",
-                        escapeshellarg($params['oldpassphrase']),
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($params['newpassphrase']));
+    public function changeKey($old,
+                              $new,
+                              $oldIsFile=FALSE,
+                              $newIsFile=FALSE) {
+        // Build command line
+        $cmd = "export LANG=C; ";
+        switch($oldIsFile) {
+            case TRUE:
+                $cmd .= sprintf("cryptsetup luksChangeKey -q ".
+                            "%s --key-file %s ",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($old));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("echo -n %s | cryptsetup luksChangeKey -q ".
+                            " %s --key-file=- ",
+                            escapeshellarg($old),
+                            escapeshellarg($this->getDeviceFile()));
+        }
+        switch($newIsFile) {
+            case TRUE:
+                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
+                break;
+            case FALSE:
+            default:
+                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        }
+        // N.B. Need to use bash rather than default sh here for
+        // process substitution method of injecting new passphrase
+        if(FALSE === $newIsFile)
+            $cmd = "/bin/bash -c '".$cmd."'";
+        // Execute
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -539,16 +631,29 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Remove a key (passphrase) from the container.
-     * @param params An array containing the following fields:
-     *   \em passphrase The passphrase to remove.
+     * Remove a key from the container.
+     * @param key The passphrase or key file (see following) to remove.
+     * @param keyIsFile Optional. A boolean indicating whether the param 'key'
+     *                  is a passphrase (FALSE, in which case key is a string),
+     *                  or a key file (TRUE, in which case key is a filepath to
+     *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function removeKey($params) {
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksRemoveKey %s --key-file=- 2>&1'",
-                        escapeshellarg($params['passphrase']),
-                        escapeshellarg($this->getDeviceFile()));
+    public function removeKey($key, $keyIsFile=FALSE) {
+        switch($keyIsFile) {
+            case TRUE:
+                $cmd = sprintf("export LANG=C; cryptsetup luksRemoveKey -q ".
+                            "%s --key-file %s 2>&1",
+                            escapeshellarg($this->getDeviceFile()),
+                            escapeshellarg($key));
+                break;
+            case FALSE:
+            default:
+                $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s | ".
+                            "cryptsetup luksRemoveKey -q %s --key-file=- 2>&1'",
+                            escapeshellarg($key),
+                            escapeshellarg($this->getDeviceFile()));
+        }
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -559,21 +664,17 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Kill a keyslot - remove a key from the container without
-     * knowing it (cf. removeKey)
-     * @param params An array containing the following fields:
-     *   \em passphrase A passphrase that unlocks the device.
-     *   \em keyslot A number from 0-7 representing which keyslot to remove
-     *           (this could be any keyslot, e.g. the one corresponding to
-     *           the supplied key/passphrase, or a different one).
+     * Erase (kill) a key slot - remove a key from the
+     * container without knowing it (cf. removeKey)
+     * @param slot A number from 0-7 representing which key slot to erase
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function killKeySlot($params) {
-        $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                        "| cryptsetup luksRemoveKey %s %s --key-file=- 2>&1'",
-                        escapeshellarg($params['passphrase']),
+    public function killSlot($slot) {
+        // Use batch mode to avoid needing a key - note this
+        // makes it trivial to kill the last slot without warning!
+        $cmd = sprintf("export LANG=C; cryptsetup -q luksKillSlot %s %s 2>&1",
                         escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($params['keyslot']));
+                        escapeshellarg($slot));
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
             $this->setLastError($output);
@@ -584,13 +685,16 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
-     * Test whether a key (passphrase) will open the container.
-     * @param params An array containing the following fields:
-     *   \em passphrase The passphrase to test.
-     * @return An integer from 0-7 representing which keyslot the
-     *         passphrase matched (unlocked), otherwise FALSE.
+     * Test whether a key will open the container.
+     * @param key A passphrase or key file (see following) to test.
+     * @param keyIsFile Optional. A boolean indicating whether the param 'key'
+     *                  is a passphrase (FALSE, in which case key is a string),
+     *                  or a key file (TRUE, in which case key is a filepath to
+     *                  the key file). Defaults to FALSE.
+     * @return An integer from 0-7 representing which key slot the
+     *         key matched (unlocked), otherwise FALSE.
      */
-    public function testKey($params) {
+    public function testKey($key, $keyIsFile=FALSE) {
         // Check what version of cryptsetup is installed to determine
         // if the --test-passphrase argument is supported or not.
         $cmd = "export LANG=C; cryptsetup --version 2>&1";
@@ -604,11 +708,21 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
         unset($cmd, $output, $result);
         // Decide which codepath to use.
         if(TRUE === $hasTestPassphrase) {
-            $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                            "| cryptsetup luksOpen -v --test-passphrase %s ".
-                            "--key-file=- 2>&1'",
-                            escapeshellarg($params['passphrase']),
-                            escapeshellarg($this->getDeviceFile()));
+            switch($keyIsFile) {
+                case TRUE:
+                    $cmd = sprintf("export LANG=C; cryptsetup luksOpen -v ".
+                                "--test-passphrase %s --key-file %s 2>&1",
+                                escapeshellarg($this->getDeviceFile()),
+                                escapeshellarg($key));
+                    break;
+                case FALSE:
+                default:
+                    $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                                "| cryptsetup luksOpen -v --test-passphrase %s ".
+                                "--key-file=- 2>&1'",
+                                escapeshellarg($key),
+                                escapeshellarg($this->getDeviceFile()));
+            }
             $validCodes = array(0);
         } else {
             // If the '--test-passphrase' argument is not available, use a
@@ -617,15 +731,26 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
             // fails with error code 5 (device already open or busy), but will
             // still report which slot was unlocked if key is valid.
             $tempName = uniqid("luksTest_");
-            $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                            "| cryptsetup luksOpen -r -v %s %s ".
-                            "--key-file=- 2>&1'",
-                            escapeshellarg($params['passphrase']),
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($tempName));
+            switch($keyIsFile) {
+                case TRUE:
+                    $cmd = sprintf("export LANG=C; cryptsetup luksOpen -r -v ".
+                                "%s %s --key-file %s 2>&1",
+                                escapeshellarg($this->getDeviceFile()),
+                                escapeshellarg($tempName),
+                                escapeshellarg($key));
+                    break;
+                case FALSE:
+                default:
+                    $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
+                                "| cryptsetup luksOpen -r -v %s %s ".
+                                "--key-file=- 2>&1'",
+                                escapeshellarg($key),
+                                escapeshellarg($this->getDeviceFile()),
+                                escapeshellarg($tempName));
+            }
             $validCodes = array(0,5);
         }
-        // Test the passphrase and get the key slot number if successful
+        // Test the key and get the key slot number if successful
         @OMVUtil::exec($cmd, $output, $result);
         if(!in_array($result, $validCodes)) {
             $this->setLastError($output);
@@ -647,15 +772,14 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
     /**
      * Backup the header for the container.
-     * @param params An array containing the following fields:
-     *     \em backupfile The filename to write the header backup to.
+     * @param filepath The filename to write the header backup to.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function backupHeader($params) {
+    public function backupHeader($filepath) {
         $cmd = sprintf("export LANG=C; cryptsetup luksHeaderBackup ".
                         "%s --header-backup-file %s 2>&1",
                 escapeshellarg($this->getDeviceFile()),
-                escapeshellarg($params['backupfile']));
+                escapeshellarg($filepath));
         @OMVUtil::exec($cmd, $output, $result);
         if($result !== 0) {
             $this->setLastError($output);
@@ -666,16 +790,14 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
 
     /**
      * Restore the header for the container from a backup.
-     * @param params An array containing the following fields:
-     *     \em filename The original name of the header file as uploaded.
-     *     \em filepath The path to the header backup file.
+     * @param filepath The path to the header backup file to restore.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function restoreHeader($params) {
+    public function restoreHeader($filepath) {
         $cmd = sprintf("export LANG=C; cryptsetup luksHeaderRestore -q ".
                         "%s --header-backup-file %s 2>&1",
                 escapeshellarg($this->getDeviceFile()),
-                escapeshellarg($params['filepath']));
+                escapeshellarg($filepath));
         @OMVUtil::exec($cmd, $output, $result);
         if($result !== 0) {
             $this->setLastError($output);

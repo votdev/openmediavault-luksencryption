@@ -56,10 +56,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->registerMethod("modifyContainer");
         $this->registerMethod("openContainer");
         $this->registerMethod("closeContainer");
-        $this->registerMethod("addContainerPassphrase");
-        $this->registerMethod("changeContainerPassphrase");
-        $this->registerMethod("removeContainerPassphrase");
-        $this->registerMethod("testContainerPassphrase");
+        $this->registerMethod("addContainerKey");
+        $this->registerMethod("changeContainerKey");
+        $this->registerMethod("removeContainerKey");
+        $this->registerMethod("testContainerKey");
         $this->registerMethod("killContainerKeySlot");
         $this->registerMethod("backupContainerHeader");
         $this->registerMethod("restoreContainerHeader");
@@ -82,7 +82,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Enumerate all LUKS containers on the system.
         if (FALSE === ($devs = OMVLuksContainers::enumerate())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Failed to get list of encrypted devices"));
+                gettext("Unable to get list of encrypted devices"));
         }
         $result = array();
         foreach($devs as $devk => $devv) {
@@ -114,7 +114,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     contains the total number of objects, \em data contains the object
      *     array. An exception will be thrown in case of an error.
      */
-    function getContainersList($params, $context) {
+    public function getContainersList($params, $context) {
         global $xmlConfig;
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
@@ -171,7 +171,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Get a list of all potential usable devices.
         if (FALSE === ($devs = OMVStorageDevices::enumerateUnused())) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Failed to get list of devices"));
+                gettext("Unable to get a list of unused devices"));
         }
         // Prepare the result list.
         $result = array();
@@ -213,7 +213,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     \em devicefile The LUKS device file to get details from.
      * @param context The context of the caller.
      * @return The details of the given LUKS device as string.
-     * @throw E_MISC_DEVICE_NOT_FOUND
+     * @throw E_MISC_FAILURE
      */
     public function getContainerDetails($params, $context) {
         // Validate the RPC caller context.
@@ -227,10 +227,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
             }
         }');
-        // Get software RAID device details.
+        // Get LUKS header details.
         $luks = new OMVLuksContainer($params['devicefile']);
         if(FALSE === $luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_DEVICE_NOT_FOUND,
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -240,10 +240,15 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     /**
      * Open (unlock) a LUKS container.
      * @param params An array containing the following fields:
+     *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The block special device of the LUKS container to open.
+     *      And containing either passphrase or key file fields:
+     *     \em passphrase The passphrase to unlock the device.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None
      * @throw E_MISC_FAILURE
+     * @throw E_EXEC_MISC
      */
     public function openContainer($params, $context) {
         global $xmlConfig;
@@ -255,8 +260,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"}
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Validate the container
@@ -267,10 +274,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Check that the container is not already open, then use
-        // the supplied passphrase to unlock it if not
+        // the supplied passphrase or key file to unlock it if not.
         if (FALSE === $luks->isOpen()) {
-            if (FALSE === $luks->open($params)) {
-                throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            if(isset($params['keyfile']) && !empty($params['keyfile']))
+                $success = $luks->open($params['keyfile'], TRUE);
+            else
+                $success = $luks->open($params['passphrase']);
+            if ($success === FALSE) {
+                throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                     sprintf(gettext("Unable to unlock encrypted device: %s"),
                             $luks->getLastError()));
             }
@@ -293,19 +304,47 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                          * it if it's not ready (not all devices are available,
                          * e.g. if more containers must be unlocked first, wait
                          * until they are all open).
-                         * Note that this only works for the first time devices
-                         * are opened - even if LUKS devices that are part of a
-                         * multi-device BTRFS filesystem are later closed, some
-                         * information is cached and so btrfs subsequently
-                         * always reports the filesystem as ready.
+                         * Note: using 'btrfs device ready' only works for the
+                         * first time devices are opened - even if LUKS devices
+                         * that are part of a multi-device BTRFS filesystem are
+                         * later closed, some information is cached and so btrfs
+                         * subsequently always reports the filesystem as ready.
+                         * Hence, this workaround checks the number of devices
+                         * online for the filesystem via 'btrfs filesystem show'
+                         * instead, which should be more reliable.
+                         * TODO: submit a patch to the core BTRFS backend that
+                         * exposes this in a class function instead?
                          */
-                        $cmd = sprintf("export LANG=C; btrfs device ready %s",
-                                        $luks->getDecryptedDeviceFile());
+                        // Find out how many devices are in the filesystem
+                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                        "show %s | grep 'Total devices' | ".
+                                        "awk '{print $3}'",
+                                        escapeshellarg($meObject['uuid']));
                         @OMVUtil::exec($cmd, $output, $result);
                         if($result !== 0) {
                             $this->setLastError($output);
                             continue;
                         }
+                        $totalDevices = (int)$output[0];
+                        // If the fs has fewer than one device (an error
+                        // of some kind occurred), skip mounting
+                        if($totalDevices < 1)
+                            continue;
+                        unset($cmd, $output, $result);
+                        // Find out how many are online
+                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                        "show %s | grep 'devid' | wc -l",
+                                        escapeshellarg($meObject['uuid']));
+                        @OMVUtil::exec($cmd, $output, $result);
+                        if($result !== 0) {
+                            $this->setLastError($output);
+                            continue;
+                        }
+                        $availableDevices = (int)$output[0];
+                        // If not all devices are online, skip mounting
+                        if($availableDevices !== $totalDevices)
+                            continue;
+                        unset($cmd, $output, $result);
                     case "ext2":
                     case "ext3":
                     case "ext4":
@@ -337,6 +376,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
+     * @throw E_EXEC_MISC
      */
     public function closeContainer($params, $context) {
         global $xmlConfig;
@@ -361,7 +401,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Check if the container is open, and proceed to close it if so
         if (TRUE === $luks->isOpen()) {
             if (FALSE === $luks->close()) {
-                throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                     sprintf(gettext("Unable to lock encrypted device: %s"),
                             $luks->getLastError()));
             }
@@ -372,11 +412,15 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * Create a LUKS container.
      * @param params An array containing the following fields:
      *     \em devicefile The device file where to create the LUKS container.
+     *     And containing either passphrase or key file fields:
      *     \em passphrase The passphrase to unlock the device.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_DEVICE_NOT_FOUND
+     * @throw E_MISC_FAILURE
      * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
     public function createContainer($params, $context) {
         // Validate the RPC caller context.
@@ -387,8 +431,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type": "string"}
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
         // Get the storage device object.
@@ -437,9 +482,15 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Create the container.
         $luks = new OMVLuksContainer($sd->getDeviceFile());
-        if (!$luks->create($params)) {
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $success = $luks->create($sd->getDeviceFile(),
+                                     $params['keyfile'],
+                                     TRUE);
+        else
+            $success = $luks->open($sd->getDeviceFile(), $params['passphrase']);
+        if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to create encrypted device: %s"),
+                gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
@@ -457,7 +508,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_MISC
      */
     public function deleteContainer($params, $context) {
         // Validate the RPC caller context.
@@ -471,17 +521,17 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
             }
         }');
-        // Check if the container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (!$luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("No encryption found on '%s'"),
-                $params['devicefile']));
+                sprintf(gettext("LUKS container on '%s' not found"),
+                        $params['devicefile']));
         }
         // Remove the container.
         if (!$luks->remove()) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to remove the encrypted device: %s"),
+            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
+                gettext("Unable to remove the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
@@ -495,13 +545,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     /**
      * Modify a LUKS container.
      * @param params An array containing the following fields:
+     *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The device file of the container to modify.
      *     \em openatboot A boolean value representing whether to unlock
      *         the encrypted device at boot or not.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
      */
     public function modifyContainer($params, $context) {
         // Validate the RPC caller context.
@@ -512,16 +562,17 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "openatboot":{"type":"boolean"}
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "openatboot":   {"type":"boolean"}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("No encryption found on '%s'"),
-                $params['devicefile']));
+                sprintf(gettext("LUKS container on '%s' not found"),
+                        $params['devicefile']));
         }
         // Set the unlock at boot status
         // TODO: change crypttab method
@@ -535,17 +586,21 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
     }
 
     /**
-     * Add a passphrase for a container.
+     * Add a key to a container.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file of the container to modify.
+     *     \em UUID The UUID of the LUKS container device.
+     *     \em devicefile The block special device of the LUKS container to modify.
+     *      And containing either passphrase or file fields for old & new:
      *     \em oldpassphrase A current passphrase that will unlock the device.
      *     \em newpassphrase The new passphrase to add.
+     *     \em oldkeyfile Path to the uploaded key file that unlocks the device.
+     *     \em newkeyfile Path to the uploaded key file to add.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
-    public function addContainerPassphrase($params, $context) {
+    public function addContainerKey($params, $context) {
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -554,38 +609,60 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "oldpassphrase":{"type":"string"},
-                "newpassphrase":{"type":"string"}
+                "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "oldpassphrase":    {"type":"string", "optional":"true"},
+                "newpassphrase":    {"type":"string", "optional":"true"},
+                "oldkeyfile":       {"type":"string", "optional":"true"},
+                "newkeyfile":       {"type":"string", "optional":"true"}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf(gettext("No encryption found on '%s'"),
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Change passphrase.
-        if (!$luks->addKey($params)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to add the passphrase to the encrypted device: %s"),
-                $luks->getLastError()));
+        // Build the command depending on the mix of passphrases and key files
+        if(isset($params['oldkeyfile']) && !empty($params['oldkeyfile'])) {
+            $old = $params['oldkeyfile'];
+            $oldIsKeyFile = TRUE;
+        } else {
+            $old = $params['oldpassphrase'];
+            $oldIsKeyFile = FALSE;
+        }
+        if(isset($params['newkeyfile']) && !empty($params['newkeyfile'])) {
+            $new = $params['newkeyfile'];
+            $newIsKeyFile = TRUE;
+        } else {
+            $new = $params['newpassphrase'];
+            $newIsKeyFile = FALSE;
+        }
+        // Add the key
+        if (FALSE === $luks->addKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+                sprintf(gettext("Unable to add the key to the encrypted device: %s"),
+                        $luks->getLastError()));
         }
     }
 
     /**
-     * Change a passphrase for a container.
+     * Change a key in the container.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file of the container to modify.
-     *     \em oldpassphrase The current passphrase to unlock the device.
-     *     \em newpassphrase The new passphrase to replace the old one with.
+     *     \em UUID The UUID of the LUKS container device.
+     *     \em devicefile The block special device of the LUKS container to modify.
+     *      And containing either passphrase or file fields for old & new:
+     *     \em oldpassphrase A current passphrase that will unlock the device.
+     *     \em newpassphrase The new passphrase which will replace the old key.
+     *     \em oldkeyfile Path to the uploaded key file that unlocks the device.
+     *     \em newkeyfile Path to the uploaded key file that replaces the old key.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
-    public function changeContainerPassphrase($params, $context) {
+    public function changeContainerKey($params, $context) {
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -594,37 +671,58 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "oldpassphrase":{"type":"string"},
-                "newpassphrase":{"type":"string"}
+                "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "oldpassphrase":    {"type":"string", "optional":"true"},
+                "newpassphrase":    {"type":"string", "optional":"true"},
+                "oldkeyfile":       {"type":"string", "optional":"true"},
+                "newkeyfile":       {"type":"string", "optional":"true"}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("No encryption found on '%s'"),
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Change passphrase.
-        if (!$luks->changeKey($params)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to change the passphrase for the encrypted device: %s"),
-                $luks->getLastError()));
+        // Build the command depending on the mix of passphrases and key files
+        if(isset($params['oldkeyfile']) && !empty($params['oldkeyfile'])) {
+            $old = $params['oldkeyfile'];
+            $oldIsKeyFile = TRUE;
+        } else {
+            $old = $params['oldpassphrase'];
+            $oldIsKeyFile = FALSE;
+        }
+        if(isset($params['newkeyfile']) && !empty($params['newkeyfile'])) {
+            $new = $params['newkeyfile'];
+            $newIsKeyFile = TRUE;
+        } else {
+            $new = $params['newpassphrase'];
+            $newIsKeyFile = FALSE;
+        }
+        // Add the key
+        if (FALSE === $luks->changeKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+                sprintf(gettext("Unable to change the key on the encrypted device: %s"),
+                        $luks->getLastError()));
         }
     }
 
     /**
-     * Remove a passphrase from a container.
+     * Remove a key from a container.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file of the container to modify.
+     *     \em UUID The UUID of the LUKS container device.
+     *     \em devicefile The block special device of the LUKS container to modify.
+     *      And containing either passphrase or filename/path fields:
      *     \em passphrase The passphrase to remove from the device.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
-    public function removeContainerPassphrase($params, $context) {
+    public function removeContainerKey($params, $context) {
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -633,37 +731,47 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"}
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "usedslots":    {"type":"integer", "optional":"true"},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf(gettext("No encryption found on '%s'"),
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Change passphrase.
-        if (!$luks->removeKey($params)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to remove the passphrase from the encrypted device: %s"),
-                $luks->getLastError()));
+        // Remove the key
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $success = $luks->removeKey($params['keyfile'], TRUE);
+        else
+            $success = $luks->removeKey($params['passphrase']);
+        if ($success === FALSE) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+                sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
+                        $luks->getLastError()));
         }
     }
 
     /**
-     * Test whether a passphrase unlocks a container.
+     * Test whether a key unlocks a container.
      * @param params An array containing the following fields:
-     *     \em devicefile The device file of the container to modify.
-     *     \em passphrase The passphrase to remove from the device.
+     *     \em UUID The UUID of the LUKS container device.
+     *     \em devicefile The block special device of the LUKS container to open.
+     *      And containing either passphrase or key file fields:
+     *     \em passphrase The passphrase to unlock the device.
+     *     \em keyfile Path to the uploaded key file to unlock the device.
      * @param context The context of the caller.
      * @return An integer from 0-7 representing which keyslot the
      *          passphrase successfully unlocked, otherwise none.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
-    public function testContainerPassphrase($params, $context) {
+    public function testContainerKey($params, $context) {
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -672,36 +780,42 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"}
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "passphrase":	{"type":"string", "optional":"true"},
+                "keyfile":	    {"type":"string", "optional":"true"}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf(gettext("No encryption found on '%s'"),
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Test passphrase.
-        if (FALSE === ($slot = $luks->testKey($params))) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf(gettext("The passphrase did not unlock any key slot on the device")));
+        // Test the key
+        if(isset($params['keyfile']) && !empty($params['keyfile']))
+            $slot = $luks->testKey($params['keyfile'], TRUE);
+        else
+            $slot = $luks->testKey($params['passphrase']);
+        if ($slot === FALSE) {
+            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+              sprintf(gettext("The key did not unlock any key slot on the device")));
         } else {
             return $slot;
         }
     }
 
     /**
-     * Kill a keyslot on the container.
+     * Erase (kill) a key slot on the container.
      * @param params An array containing the following fields:
+     *     \em UUID The UUID of the LUKS container device.
      *     \em devicefile The device file of the container to modify.
-     *     \em passphrase A current passphrase that will unlock the device.
-     *     \em keyslot A number from 0-7 representing which keyslot to kill.
+     *     \em keyslot A number from 0-7 representing which key slot to kill.
      * @param context The context of the caller.
      * @return None.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
     public function killContainerKeySlot($params, $context) {
         // Validate the RPC caller context.
@@ -712,22 +826,22 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":{"type":"string"},
-                "keyslot":{ "type": "integer", "minimum":0, "maximum":7 }
+                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
+                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
+                "keyslot":      { "type": "integer", "minimum":0, "maximum":7 }
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-              sprintf("No encryption found on '%s'",
+                sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
-        // Kill the keyslot.
-        if (!$luks->killKeySlot($params)) {
+        // Kill the key slot.
+        if (!$luks->killSlot($params['keyslot'])) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to kill the key slot on the encrypted device: %s"),
+                gettext("Unable to erase the key slot on the encrypted device: %s"),
                 $luks->getLastError()));
         }
     }
@@ -742,7 +856,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     \em filepath Location of the temporary file.
      *     \em unlink Whether to delete the temporary file after downloading.
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
     public function backupContainerHeader($params, $context) {
         // Validate the RPC caller context.
@@ -766,10 +880,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Extract the header to a temporary location and modify the
         // file mode/owner to allow the WebGUI PHP backend to unlink it.
         $tmpFilePath = sys_get_temp_dir()."/".uniqid("luksHeader");
-        $params['backupfile'] = $tmpFilePath;
-        if (!$luks->backupHeader($params)) {
+        if (!$luks->backupHeader($tmpFilePath)) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to extract the LUKS header from ".
+                gettext("Unable to extract the LUKS header from ".
                         "the encrypted device: %s"),
                 $luks->getLastError()));
         }
@@ -800,10 +913,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @return None
      * @throw E_MISC_DEVICE_NOT_FOUND
      * @throw E_MISC_FAILURE
-     * @throw E_EXEC_FAILED
+     * @throw E_EXEC_MISC
      */
     public function restoreContainerHeader($params, $context) {
-        print_r($params);
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
@@ -863,9 +975,9 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Write the header to the device
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (!$luks->restoreHeader($params)) {
+        if (!$luks->restoreHeader($params['filepath'])) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
-                gettext("Failed to restore the LUKS header to ".
+                gettext("Unable to restore the LUKS header to ".
                         "device %s: %s"),
                 $params['devicefile'],
                 $luks->getLastError()));
