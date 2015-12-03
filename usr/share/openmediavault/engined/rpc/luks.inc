@@ -487,7 +487,8 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                                      $params['keyfile'],
                                      TRUE);
         else
-            $success = $luks->open($sd->getDeviceFile(), $params['passphrase']);
+            $success = $luks->create($sd->getDeviceFile(),
+                                     $params['passphrase']);
         if ($success === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to create the encrypted device: %s"),

@@ -1,3 +1,9 @@
+openmediavault-luksencryption (2.0.1) unstable; urgency=high
+
+  * Bugfix: typo in createContainer() caused creating containers with passphrases to fail.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 03 Dec 2015 20:29:01 +0000
+
 openmediavault-luksencryption (2.0.0) unstable; urgency=medium
 
   * Key file support.
