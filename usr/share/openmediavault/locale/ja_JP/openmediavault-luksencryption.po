@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-24 03:56+0000\n"
+"PO-Revision-Date: 2015-11-27 05:53+0000\n"
 "Last-Translator: Toshihiro Kan <kansuke4649@gmail.com>\n"
 "Language-Team: Japanese (Japan) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/ja_JP/)\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr ""
+msgstr "%s は有効なLUKSヘッダのバックアップファイルではありません"
 
 msgid "Add"
 msgstr "追加"
@@ -28,10 +28,10 @@ msgid "Add passphrase"
 msgstr "パスフレーズの追加"
 
 msgid "Backup header"
-msgstr ""
+msgstr "バックアップヘッダ"
 
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 msgid "Change"
 msgstr "変更"
@@ -145,28 +145,28 @@ msgid "Failed to restore the LUKS header to "
 msgstr ""
 
 msgid "Force"
-msgstr ""
+msgstr "フォース"
 
 msgid "Header file"
-msgstr ""
+msgstr "ヘッダファイル"
 
 msgid "Key slot"
-msgstr ""
+msgstr "キースロット"
 
 msgid "Key slots in use"
-msgstr ""
+msgstr "使用中のキーストア"
 
 msgid "Keys"
 msgstr "キー"
 
 msgid "Kill"
-msgstr ""
+msgstr "削除（Kill）"
 
 msgid "Kill key slot"
-msgstr ""
+msgstr "キースロットの削除"
 
 msgid "Kill slot"
-msgstr ""
+msgstr "スロットの削除"
 
 msgid "LUKS container on '%s' not found"
 msgstr ""
@@ -175,10 +175,10 @@ msgid "LUKS encrypted device %s [%s, %s]"
 msgstr ""
 
 msgid "Lock"
-msgstr ""
+msgstr "ロック"
 
 msgid "Locking device ..."
-msgstr ""
+msgstr "デバイスをロックしています ..."
 
 msgid "New passphrase to add to the encrypted device"
 msgstr ""
@@ -187,7 +187,7 @@ msgid "New passphrase to replace the existing one (above)"
 msgstr ""
 
 msgid "No"
-msgstr ""
+msgstr "いいえ"
 
 msgid "No encryption found on '%s'"
 msgstr ""
@@ -196,7 +196,7 @@ msgid "No storage device backend exists for device %s"
 msgstr ""
 
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
@@ -204,19 +204,19 @@ msgid ""
 msgstr ""
 
 msgid "Passphrase"
-msgstr ""
+msgstr "パスフレーズ"
 
 msgid "Passphrases don't match"
-msgstr ""
+msgstr "パスフレーズが一致しません"
 
 msgid "Recovery"
-msgstr ""
+msgstr "リカバリ"
 
 msgid "Referenced"
-msgstr ""
+msgstr "参考"
 
 msgid "Remove"
-msgstr ""
+msgstr "リムーブ"
 
 msgid "Remove passphrase"
 msgstr ""
@@ -225,19 +225,19 @@ msgid "Restore encrypted device header"
 msgstr ""
 
 msgid "Restore header"
-msgstr ""
+msgstr "リストアヘッダ"
 
 msgid "Select a device ..."
-msgstr ""
+msgstr "デバイスを選択 ..."
 
 msgid "Size"
-msgstr ""
+msgstr "サイズ"
 
 msgid "Success"
-msgstr ""
+msgstr "成功"
 
 msgid "Test"
-msgstr ""
+msgstr "テスト"
 
 msgid "Test passphrase"
 msgstr ""
@@ -257,7 +257,7 @@ msgid "The passphrase successfully unlocked key slot "
 msgstr ""
 
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
 msgstr ""
@@ -266,16 +266,16 @@ msgid "Unable to unlock encrypted device: %s"
 msgstr ""
 
 msgid "Unlock"
-msgstr ""
+msgstr "アンロック"
 
 msgid "Unlock encrypted device"
 msgstr ""
 
 msgid "Unlocked"
-msgstr ""
+msgstr "アンロック済"
 
 msgid "Unlocking ..."
-msgstr ""
+msgstr "アンロックしています ..."
 
 msgid "Upload header backup file"
 msgstr ""
@@ -284,7 +284,7 @@ msgid "Uploading header backup file ..."
 msgstr ""
 
 msgid "Yes"
-msgstr ""
+msgstr "はい"
 
 msgid "n/a"
-msgstr ""
+msgstr "n/a"
