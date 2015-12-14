@@ -276,11 +276,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Check that the container is not already open, then use
         // the supplied passphrase or key file to unlock it if not.
         if (FALSE === $luks->isOpen()) {
-            if(isset($params['keyfile']) && !empty($params['keyfile']))
-                $success = $luks->open($params['keyfile'], TRUE);
-            else
-                $success = $luks->open($params['passphrase']);
-            if ($success === FALSE) {
+            if(isset($params['keyfile']) && !empty($params['keyfile'])) {
+                $key = $params['keyfile'];
+                $keyIsFile = TRUE;
+            } else {
+                $key = $params['passphrase'];
+                $keyIsFile = FALSE;
+            }
+            if ($luks->open($key, $keyIsFile) === FALSE) {
                 throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                     sprintf(gettext("Unable to unlock encrypted device: %s"),
                             $luks->getLastError()));
@@ -482,14 +485,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Create the container.
         $luks = new OMVLuksContainer($sd->getDeviceFile());
-        if(isset($params['keyfile']) && !empty($params['keyfile']))
-            $success = $luks->create($sd->getDeviceFile(),
-                                     $params['keyfile'],
-                                     TRUE);
-        else
-            $success = $luks->create($sd->getDeviceFile(),
-                                     $params['passphrase']);
-        if ($success === FALSE) {
+        if(isset($params['keyfile']) && !empty($params['keyfile'])) {
+            $key = $params['keyfile'];
+            $keyIsFile = TRUE;
+        } else {
+            $key = $params['passphrase'];
+            $keyIsFile = FALSE;
+        }
+        if ($luks->create($key, $keyIsFile) === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
                 gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
@@ -747,11 +750,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                         $params['devicefile']));
         }
         // Remove the key
-        if(isset($params['keyfile']) && !empty($params['keyfile']))
-            $success = $luks->removeKey($params['keyfile'], TRUE);
-        else
-            $success = $luks->removeKey($params['passphrase']);
-        if ($success === FALSE) {
+        if(isset($params['keyfile']) && !empty($params['keyfile'])) {
+            $key = $params['keyfile'];
+            $keyIsFile = TRUE;
+        } else {
+            $key = $params['passphrase'];
+            $keyIsFile = FALSE;
+        }
+        if ($luks->removeKey($key, $keyIsFile) === FALSE) {
             throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
                 sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
                         $luks->getLastError()));
@@ -871,12 +877,12 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
             }
         }');
-        // Check if container exists.
+        // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
-        if (FALSE === $luks->exists()) {
+        if (is_null($luks) || !$luks->exists()) {
             throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("No encryption found on '%s'"),
-                $params['devicefile']));
+                sprintf(gettext("LUKS container on '%s' not found"),
+                        $params['devicefile']));
         }
         // Extract the header to a temporary location and modify the
         // file mode/owner to allow the WebGUI PHP backend to unlink it.
@@ -892,9 +898,19 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         chmod($tmpFilePath, 0600);
         chgrp($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
         chown($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
+        // Build filename for file
+        $fn = preg_replace('/\s+/',
+                           '-',
+                           array(
+                                 $luks->getVendor(),
+                                 $luks->getModel(),
+                                 $luks->getSerialNumber(),
+                                 $luks->getUuid()
+                                )
+                          );
         // Return values required by generic download RPC implementation.
         return array(
-            "filename"       => "LUKS_header_".$luks->getUuid().".bak",
+            "filename"       => "LUKS_header_".implode('_', $fn).".bak",
             "filepath"       => $tmpFilePath,
             "contenttype"    => "application/octet-stream",
             "unlink"         => TRUE

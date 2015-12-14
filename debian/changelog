@@ -1,3 +1,11 @@
+openmediavault-luksencryption (2.1.0) UNRELEASED; urgency=medium
+
+  * Refactor some code to avoid duplicated calls that led to typo bug in v2.0.0.
+  * Tweak description of devices/containers.
+  * Tweak filename for header backups.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Mon, 14 Dec 2015 13:37:13 +0000
+
 openmediavault-luksencryption (2.0.1) unstable; urgency=high
 
   * Bugfix: typo in createContainer() caused creating containers with passphrases to fail.
