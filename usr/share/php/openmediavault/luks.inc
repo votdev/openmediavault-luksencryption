@@ -361,7 +361,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function create($devicefile, $key, $keyIsFile=FALSE) {
+    public function create($key, $keyIsFile=FALSE) {
         switch($keyIsFile) {
             case TRUE:
                 $cmd = sprintf("export LANG=C; cryptsetup luksFormat %s ".
