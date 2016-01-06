@@ -39,7 +39,7 @@ class OMVLuksContainers extends OMVObject {
      * )
      */
     public static function enumerate() {
-        $cmd = "export LANG=C; lsblk -o kname,fstype -lbnr ".
+        $cmd = "export LANG=C; lsblk -o kname,fstype -bnr ".
                 "2>/dev/null ".
                 "| grep crypto_LUKS | awk '{print \"/dev/\"\$1}' ";
         @OMVUtil::exec($cmd, $output, $result);
