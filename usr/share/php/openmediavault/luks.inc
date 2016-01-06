@@ -343,8 +343,8 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function getDescription() {
         if ($this->getData() === FALSE)
             return FALSE;
-        return sprintf(gettext("LUKS encrypted device (%s) [%s, %s]"),
-                        $this->getModel(),
+        return sprintf(gettext("LUKS encrypted device %s[%s, %s]"),
+                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
                         $this->getDeviceFile(),
                         binary_format($this->getSize()));
     }
@@ -890,9 +890,9 @@ class OMVStorageDeviceLUKS extends OMVStorageDeviceDM {
      * @return The LUKS container description, FALSE on failure.
      */
     public function getDescription() {
-        return sprintf(gettext("LUKS encrypted container on %s %s [%s, %s]"),
+        return sprintf(gettext("LUKS encrypted container on %s %s[%s, %s]"),
                         $this->getCanonicalLuksEncryptedDeviceFile(),
-                        ($this->getModel()) ? '('.$this->getModel().')' : '',
+                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
                         $this->getDeviceFile(),
                         binary_format($this->getSize()));
     }
