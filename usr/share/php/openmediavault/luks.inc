@@ -39,9 +39,7 @@ class OMVLuksContainers extends OMVObject {
      * )
      */
     public static function enumerate() {
-        $cmd = "export LANG=C; lsblk -o kname,fstype -lbnr ".
-                "2>/dev/null ".
-                "| grep crypto_LUKS | awk '{print \"/dev/\"\$1}' ";
+        $cmd = "export LANG=C; blkid -t TYPE=crypto_LUKS -o device 2>/dev/null";
         @OMVUtil::exec($cmd, $output, $result);
         if($result !== 0)
             return FALSE;
@@ -345,8 +343,8 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     public function getDescription() {
         if ($this->getData() === FALSE)
             return FALSE;
-        return sprintf(gettext("LUKS encrypted device %s [%s, %s]"),
-                        $this->getDecryptedName(),
+        return sprintf(gettext("LUKS encrypted device %s[%s, %s]"),
+                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
                         $this->getDeviceFile(),
                         binary_format($this->getSize()));
     }
@@ -361,7 +359,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
      *                  the key file). Defaults to FALSE.
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function create($devicefile, $key, $keyIsFile=FALSE) {
+    public function create($key, $keyIsFile=FALSE) {
         switch($keyIsFile) {
             case TRUE:
                 $cmd = sprintf("export LANG=C; cryptsetup luksFormat %s ".
@@ -878,12 +876,23 @@ class OMVStorageDeviceLUKS extends OMVStorageDeviceDM {
     }
 
     /**
+     * Get the underlying device model.
+     * @return The device model, otherwise an empty string.
+     */
+    public function getModel() {
+        if(FALSE === ($luks = $this->getContainer()))
+            return "";
+        return $luks->getModel();
+    }
+
+    /**
      * Get the description of the LUKS container.
      * @return The LUKS container description, FALSE on failure.
      */
     public function getDescription() {
-        return sprintf(gettext("LUKS encrypted device %s [%s, %s]"),
-                        $this->getLuksEncryptedDeviceName(),
+        return sprintf(gettext("LUKS encrypted container on %s %s[%s, %s]"),
+                        $this->getCanonicalLuksEncryptedDeviceFile(),
+                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
                         $this->getDeviceFile(),
                         binary_format($this->getSize()));
     }
