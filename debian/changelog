@@ -1,10 +1,13 @@
-openmediavault-luksencryption (2.1.0) UNRELEASED; urgency=medium
+openmediavault-luksencryption (2.1.0) unstable; urgency=high
 
+  * Tested on OMV 3.0.
+  * Activate LVM volume groups after unlocking for LVM-on-LUKS.
+  * Fix for duplicate entries in the case of, e.g. partitions on RAID devices.
   * Refactor some code to avoid duplicated calls that led to typo bug in v2.0.0.
   * Tweak description of devices/containers.
   * Tweak filename for header backups.
 
- -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Mon, 14 Dec 2015 13:37:13 +0000
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Wed, 06 Jan 2016 14:53:13 +0000
 
 openmediavault-luksencryption (2.0.1) unstable; urgency=high
 
