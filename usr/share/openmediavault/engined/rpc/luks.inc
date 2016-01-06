@@ -28,6 +28,7 @@ require_once("openmediavault/functions.inc");
 require_once("openmediavault/luks.inc");
 require_once("openmediavault/rpcservice.inc");
 require_once("openmediavault/notify.inc");
+include_once("openmediavault/lvm.inc");
 
 class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
 
@@ -289,84 +290,142 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                             $luks->getLastError()));
             }
         }
+        /* Downstream operations with the decrypted container */
+        $sdluks = new OMVStorageDeviceLUKS($luks->getDecryptedDeviceFile());
+        $df = $sdluks->getDeviceFile();
+        // If the container contains an LVM physical volume, determine the
+        // volume group and activate it (otherwise the logical volume and any
+        // filesystem on it won't be accessible)
+        if (class_exists("OMVLvmPhysicalVolume")) {
+            // Use LVM plugin if it's installed to get VG name
+            $pv = new OMVLvmPhysicalVolume($df);
+            if (TRUE === $pv->exists()) {
+                $vgName = $pv->getVGName();
+            }
+        } else {
+            // Fall back to manual method without LVM plugin
+            $cmd = sprintf("export LANG=C; pvdisplay --noheadings ".
+                            "-C -o vg_name %s ",
+                            escapeshellarg($df));
+            @OMVUtil::exec($cmd, $output, $result);
+            if($result === 0) {
+                $vgName = trim($output[0]);
+            }
+        }
+        // PV/VG was found - activate the VG, set devicefile to LV via
+        // LVM plugin if available - although LVM/udev seems to
+        // automatically mount filesystems in fstab from logical
+        // volumes when activated, so probably not strictly necessary.
+        if (isset($vgName)) {
+            $this->debug(sprintf("%s contains an LVM2 PV, part of VG: %s",
+                                 $df, $vgName));
+            $cmd = sprintf("export LANG=C; vgchange -a y %s ",
+                            escapeshellarg($vgName));
+            @OMVUtil::exec($cmd, $output, $result);
+            if($result !== 0) {
+                $this->debug($output);
+            } else {
+                if (class_exists("OMVLvmVolumeGroup")) {
+                    $vg = new OMVLvmVolumeGroup($vgName);
+                    $lvNames = $vg->getLVName();
+                    $fsDevs = array_map(function($lv) use ($vgName) {
+                                            return "/dev/$vgName-$lv";
+                                        }, $lvNames);
+                }
+            }
+        } else {
+            // If not an LVM2 PV, just pass the container devicefile
+            $fsDevs = array($df);
+        }
         // If the container contains a (referenced) filesystem, then mount it
         // (unless this automounting is disabled by the global configuration
         // option, OMV_LUKS_MOUNT_ON_UNLOCK - see initialize() above)
         if(TRUE === $this->mountOnUnlock) {
-            $sdluks = new OMVStorageDeviceLUKS($luks->getDecryptedDeviceFile());
-            $df = $sdluks->getDeviceFile();
-            if(FALSE !== OMVRpc::exec("FileSystemMgmt", "hasFilesystem",
-                            array("devicefile" => $df), $context)) {
-                if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
-                                array("id" => $df), $context))) {
-                    switch (strtolower($meObject['type'])) {
-                    case "btrfs":
-                        /**
-                         * Check if the unlocked device is part of a multi-
-                         * device BTRFS filesystem, and don't attempt to mount
-                         * it if it's not ready (not all devices are available,
-                         * e.g. if more containers must be unlocked first, wait
-                         * until they are all open).
-                         * Note: using 'btrfs device ready' only works for the
-                         * first time devices are opened - even if LUKS devices
-                         * that are part of a multi-device BTRFS filesystem are
-                         * later closed, some information is cached and so btrfs
-                         * subsequently always reports the filesystem as ready.
-                         * Hence, this workaround checks the number of devices
-                         * online for the filesystem via 'btrfs filesystem show'
-                         * instead, which should be more reliable.
-                         * TODO: submit a patch to the core BTRFS backend that
-                         * exposes this in a class function instead?
-                         */
-                        // Find out how many devices are in the filesystem
-                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
-                                        "show %s | grep 'Total devices' | ".
-                                        "awk '{print $3}'",
-                                        escapeshellarg($meObject['uuid']));
-                        @OMVUtil::exec($cmd, $output, $result);
-                        if($result !== 0) {
-                            $this->setLastError($output);
-                            continue;
-                        }
-                        $totalDevices = (int)$output[0];
-                        // If the fs has fewer than one device (an error
-                        // of some kind occurred), skip mounting
-                        if($totalDevices < 1)
-                            continue;
-                        unset($cmd, $output, $result);
-                        // Find out how many are online
-                        $cmd = sprintf("export LANG=C; btrfs filesystem ".
-                                        "show %s | grep 'devid' | wc -l",
-                                        escapeshellarg($meObject['uuid']));
-                        @OMVUtil::exec($cmd, $output, $result);
-                        if($result !== 0) {
-                            $this->setLastError($output);
-                            continue;
-                        }
-                        $availableDevices = (int)$output[0];
-                        // If not all devices are online, skip mounting
-                        if($availableDevices !== $totalDevices)
-                            continue;
-                        unset($cmd, $output, $result);
-                    case "ext2":
-                    case "ext3":
-                    case "ext4":
-                    case "jfs":
-                    case "xfs":
-                    case "hfsplus":
-                    case "reiserfs":
-                    case "iso9660":
-                    case "udf":
-                    case "vfat":
-                    case "ntfs":
-                    default:
-                        OMVRpc::exec("FileSystemMgmt", "mount",
-                            array(
-                                    "id" => $meObject['fsname'],
-                                    "fstab" => FALSE
-                                 ),
-                            $context);
+            foreach ($fsDevs as $dev) {
+                $this->mountContainerFS($dev, $context);
+            }
+        }
+    }
+
+    /**
+     * Helper function for mounting filesystems inside containers on unlocking.
+     * @param devicefile The decrypted block special device of the
+     *                   filesystem (inside the LUKS container) to mount.
+     * @param context The context of the caller.
+     * @return None.
+     */
+    private function mountContainerFS($deviceFile, $context) {
+        if(FALSE !== OMVRpc::exec("FileSystemMgmt", "hasFilesystem",
+                        array("devicefile" => $deviceFile), $context)) {
+            if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
+                            array("id" => $deviceFile), $context))) {
+                switch (strtolower($meObject['type'])) {
+                case "btrfs":
+                    /**
+                     * Check if the unlocked device is part of a multi-
+                     * device BTRFS filesystem, and don't attempt to mount
+                     * it if it's not ready (not all devices are available,
+                     * e.g. if more containers must be unlocked first, wait
+                     * until they are all open).
+                     * Note: using 'btrfs device ready' only works for the
+                     * first time devices are opened - even if LUKS devices
+                     * that are part of a multi-device BTRFS filesystem are
+                     * later closed, some information is cached and so btrfs
+                     * subsequently always reports the filesystem as ready.
+                     * Hence, this workaround checks the number of devices
+                     * online for the filesystem via 'btrfs filesystem show'
+                     * instead, which should be more reliable.
+                     * TODO: submit a patch to the core BTRFS backend that
+                     * exposes this in a class function instead?
+                     */
+                    // Find out how many devices are in the filesystem
+                    $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                    "show %s | grep 'Total devices' | ".
+                                    "awk '{print $3}'",
+                                    escapeshellarg($meObject['uuid']));
+                    @OMVUtil::exec($cmd, $output, $result);
+                    if($result !== 0) {
+                        $this->setLastError($output);
+                        continue;
                     }
+                    $totalDevices = (int)$output[0];
+                    // If the fs has fewer than one device (an error
+                    // of some kind occurred), skip mounting
+                    if($totalDevices < 1)
+                        continue;
+                    unset($cmd, $output, $result);
+                    // Find out how many are online
+                    $cmd = sprintf("export LANG=C; btrfs filesystem ".
+                                    "show %s | grep 'devid' | wc -l",
+                                    escapeshellarg($meObject['uuid']));
+                    @OMVUtil::exec($cmd, $output, $result);
+                    if($result !== 0) {
+                        $this->setLastError($output);
+                        continue;
+                    }
+                    $availableDevices = (int)$output[0];
+                    // If not all devices are online, skip mounting
+                    if($availableDevices !== $totalDevices)
+                        continue;
+                    unset($cmd, $output, $result);
+                case "ext2":
+                case "ext3":
+                case "ext4":
+                case "jfs":
+                case "xfs":
+                case "hfsplus":
+                case "reiserfs":
+                case "iso9660":
+                case "udf":
+                case "vfat":
+                case "ntfs":
+                default:
+                    OMVRpc::exec("FileSystemMgmt", "mount",
+                        array(
+                                "id" => $meObject['fsname'],
+                                "fstab" => FALSE
+                             ),
+                        $context);
                 }
             }
         }
