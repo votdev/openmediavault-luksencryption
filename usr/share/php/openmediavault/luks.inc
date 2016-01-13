@@ -41,7 +41,7 @@ class OMVLuksContainers extends OMVObject {
     public static function enumerate() {
         $cmd = "export LANG=C; blkid -t TYPE=crypto_LUKS -o device 2>/dev/null";
         @OMVUtil::exec($cmd, $output, $result);
-        if($result !== 0)
+        if(!in_array($result, array(0,2), TRUE))
             return FALSE;
         $list = array();
         // Parse command output:
