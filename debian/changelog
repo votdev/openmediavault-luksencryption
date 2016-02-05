@@ -1,3 +1,9 @@
+openmediavault-luksencryption (2.1.2) stable; urgency=medium
+
+  * Bugfix: opening LUKS-on-LVM devices would fail.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Fri, 05 Feb 2016 14:42:59 +0000
+
 openmediavault-luksencryption (2.1.1) unstable; urgency=medium
 
   * Bugfix: no LUKS devices present would cause an error message.
