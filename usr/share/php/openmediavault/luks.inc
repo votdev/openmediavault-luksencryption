@@ -146,6 +146,15 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
         if($this->dataCached !== FALSE)
             return TRUE;
 
+        // Reset cached data
+        $this->uuid                     = "";
+        $this->isOpen                   = FALSE;
+        $this->headerInfo               = "";
+        $this->usedKeySlots             = 0;
+        $this->freeKeySlots             = 8;
+        $this->deviceMapperDeviceFile   = "";
+        $this->deviceMapperName         = "";
+
         // Look up the UUID for the LUKS container
         $cmd = sprintf("export LANG=C; cryptsetup luksUUID %s",
                         $this->getDeviceFile());
@@ -337,6 +346,18 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
     }
 
     /**
+     * Helper function for determining a name for the decrypted device.
+     * Avoids naming problems with, e.g. LUKS-on-LVM where the devicefile
+     * is of the form /dev/mapper/VG-LV.
+     * @return A sanitised string for use as the mapped device name.
+     */
+    private function generateDecryptedName() {
+        $dev = $this->getDeviceName();
+        $dev = preg_replace("/^mapper\//", "", $dev);
+        return str_replace("/", "-", $dev);
+    }
+
+    /**
      * Get the description of the LUKS container.
      * @return The LUKS container description, FALSE on failure.
      */
@@ -477,7 +498,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
                 $cmd = sprintf("export LANG=C; cryptsetup luksOpen %s ".
                             "%s-crypt --key-file %s 2>&1",
                             escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($this->getDeviceName()),
+                            escapeshellarg($this->generateDecryptedName()),
                             escapeshellarg($key));
                 break;
             case FALSE:
@@ -486,7 +507,7 @@ class OMVLuksContainer extends OMVStorageDeviceAbstract {
                             "cryptsetup luksOpen %s %s-crypt --key-file=- 2>&1",
                             escapeshellarg($key),
                             escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($this->getDeviceName()));
+                            escapeshellarg($this->generateDecryptedName()));
         }
         @OMVUtil::exec($cmd, $output, $result);
         if ($result !== 0) {
