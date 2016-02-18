@@ -5,8 +5,15 @@ set -e
 . /etc/default/openmediavault
 . /usr/share/openmediavault/scripts/helper-functions
 
+KEYDIR="/etc/openmediavault/luks"
+SETTINGS_XPATH_NAME="luks"
+SETTINGS_XPATH="/config/system/storage/${SETTINGS_XPATH_NAME}"
+
 case "$1" in
     purge)
+        if omv_config_exists "${SETTINGS_XPATH}"; then
+            omv_config_delete "${SETTINGS_XPATH}"
+        fi
     ;;
 
     remove)

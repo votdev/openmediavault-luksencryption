@@ -1,8 +1,14 @@
+openmediavault-luksencryption (3.0.0) UNRELEASED; urgency=medium
+
+  * Enable automatic unlock at boot with key file.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Wed, 17 Feb 2016 14:16:14 +0000
+
 openmediavault-luksencryption (2.1.2) stable; urgency=medium
 
   * Bugfix: opening LUKS-on-LVM devices would fail.
 
- -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Fri, 05 Feb 2016 14:42:59 +0000
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Wed, 17 Feb 2016 14:15:58 +0000
 
 openmediavault-luksencryption (2.1.1) unstable; urgency=medium
 

@@ -54,9 +54,38 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
         secureDeletion: true
     },
     hideResetButton: true,
-    width: 500,
+    width: 540,
     rpcService: "LuksMgmt",
     rpcSetMethod: "createContainer",
+    plugins: [{
+        ptype: "linkedfields",
+        correlations: [{
+            name: [ "keyfile" ],
+            conditions: [
+                { name: "unlockatboot", value: true }
+            ],
+            properties: [
+                "!allowBlank"
+            ]
+        },{
+            name: [ "passphrase" ],
+            conditions: [
+                { name: "unlockatboot", value: true }
+            ],
+            properties: [
+                "readOnly",
+                "!submitValue"
+            ]
+        },{
+            name: [ "passphraseconf" ],
+            conditions: [
+                { name: "unlockatboot", value: true }
+            ],
+            properties: [
+                "readOnly"
+            ]
+        }]
+    }],
 
     constructor: function() {
         var me = this;
@@ -158,6 +187,15 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
                     specialkey: me.submitOnEnter
                 }
             }]
+        },{
+            xtype: "checkbox",
+            name: "unlockatboot",
+            fieldLabel: _("Unlock at boot"),
+            checked: false,
+            inputValue: 1,
+            uncheckedValue: 0,
+            submitValue: true,
+            boxLabel: _("Automatically unlock the container on startup. Requires a key file.")
         }];
     },
 
@@ -170,46 +208,53 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
         this.clearInvalid();
         // call standard isValid() from parent class
         var pValid = me.callParent(arguments);
-        // Check this form, only one of passphrase or key file
-        var nValid = false;
-        var passphrase = me.findField("passphrase");
-        var passphrase2 = me.findField("passphraseconf");
-        var keyfile = me.findField("keyfile");
-        if((passphrase.value == "" && keyfile.value) ||
-            (passphrase.value != "" && !keyfile.value))
-            nValid = true;
-        if(!nValid) {
-            if(passphrase.value == "" && !keyfile.value)
-                var msg = _("Either a passphrase or a key file is required");
-            else if(passphrase.value != "" && keyfile.value)
-                var msg = _("Use either a passphrase or a key file – not both");
-            this.markInvalid([
-                { id: "passphrase", msg: msg },
-                { id: "passphraseconf", msg: msg },
-                { id: "keyfile", msg: msg }
-            ]);
-        } else {
-            passphrase.clearInvalid();
-            passphrase2.clearInvalid();
-            keyfile.clearInvalid();
-            // Check the passphrases match
-            var values = me.getValues();
-            var field = me.findField("passphraseconf");
-            if (values.passphrase !== field.getValue()) {
-                var msg = _("Passphrases don't match");
+        // check whether boot-time unlock is enabled,
+        // if yes then don't need to do any more here
+        var crypttab = me.findField("unlockatboot");
+        if (!crypttab.value) {
+            // Check this form, only one of passphrase or key file
+            var nValid = false;
+            var passphrase = me.findField("passphrase");
+            var passphrase2 = me.findField("passphraseconf");
+            var keyfile = me.findField("keyfile");
+            if((passphrase.value == "" && keyfile.value) ||
+                (passphrase.value != "" && !keyfile.value))
+                nValid = true;
+            if(!nValid) {
+                if(passphrase.value == "" && !keyfile.value)
+                    var msg = _("Either a passphrase or a key file is required");
+                else if(passphrase.value != "" && keyfile.value)
+                    var msg = _("Use either a passphrase or a key file – not both");
                 this.markInvalid([
                     { id: "passphrase", msg: msg },
-                    { id: "passphraseconf", msg: msg }
+                    { id: "passphraseconf", msg: msg },
+                    { id: "keyfile", msg: msg }
                 ]);
-                nValid = false;
+            } else {
+                passphrase.clearInvalid();
+                passphrase2.clearInvalid();
+                keyfile.clearInvalid();
+                // Check the passphrases match
+                var values = me.getValues();
+                var field = me.findField("passphraseconf");
+                if (values.passphrase !== field.getValue()) {
+                    var msg = _("Passphrases don't match");
+                    this.markInvalid([
+                        { id: "passphrase", msg: msg },
+                        { id: "passphraseconf", msg: msg }
+                    ]);
+                    nValid = false;
+                }
             }
+            // Final return - both this custom isValid() and standard
+            // isValid() from parent must be true to return true.
+            if(pValid && nValid)
+                return true;
+            else
+                return false;
+        } else {
+            return pValid;
         }
-        // Final return - both this custom isValid() and standard
-        // isValid() from parent must be true to return true.
-        if(pValid && nValid)
-            return true;
-        else
-            return false;
     },
 
     onOkButton: function() {
@@ -348,7 +393,7 @@ Ext.define("OMV.module.admin.storage.luks.container.SingleKey", {
     },
     autoLoadData: false,
     hideResetButton: true,
-    width: 500,
+    width: 540,
 
     constructor: function() {
         var me = this;
@@ -593,7 +638,7 @@ Ext.define("OMV.module.admin.storage.luks.container.DualKey", {
     },
     autoLoadData: false,
     hideResetButton: true,
-    width: 500,
+    width: 540,
 
     constructor: function() {
         var me = this;
@@ -909,7 +954,7 @@ Ext.define("OMV.module.admin.storage.luks.container.KillSlot", {
     okButtonText: _("Erase"),
     autoLoadData: false,
     hideResetButton: true,
-    width: 500,
+    width: 540,
 
     initComponent: function() {
         var me = this;

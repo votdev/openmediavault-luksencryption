@@ -5,12 +5,21 @@ set -e
 . /etc/default/openmediavault
 . /usr/share/openmediavault/scripts/helper-functions
 
+KEYDIR="/etc/openmediavault/luks"
+SETTINGS_XPATH_NAME="luks"
+SETTINGS_XPATH="/config/system/storage/${SETTINGS_XPATH_NAME}"
+
 case "$1" in
     configure)
+        if ! omv_config_exists "${SETTINGS_XPATH}"; then
+            omv_config_add_element "/config/system/storage" "${SETTINGS_XPATH_NAME}"
+        fi
         # Activate package triggers. These triggers are only set during the
         # package installation.
         dpkg-trigger update-fixperms
         dpkg-trigger update-locale
+        chown root:openmediavault-engined $KEYDIR
+        chmod 770 $KEYDIR
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

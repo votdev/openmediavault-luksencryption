@@ -23,8 +23,10 @@
  */
 require_once("openmediavault/object.inc");
 require_once("openmediavault/error.inc");
+require_once("openmediavault/config.inc");
 require_once("openmediavault/system.inc");
 require_once("openmediavault/functions.inc");
+require_once("openmediavault/util.inc");
 require_once("openmediavault/luks.inc");
 require_once("openmediavault/rpcservice.inc");
 require_once("openmediavault/notify.inc");
@@ -34,11 +36,23 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
 
     private $mountOnUnlock = TRUE;
 
+    private $rpcServiceName = "LuksMgmt";
+    private $moduleName = "luks";
+
+    private $configXPath = "/config/system/storage/luks";
+    private $containerXPath = "/config/system/storage/luks/container";
+
+    private $eventMessagePath = "org.openmediavault.system.storage.luks";
+    private $containerEventMessagePath = "org.openmediavault.system.storage.luks.container";
+
+
     /**
-     * Get the RPC service name.
+     * Get the name of the RPC service.
+     *
+     * @return string
      */
     public function getName() {
-        return "LuksMgmt";
+        return $this->rpcServiceName;
     }
 
     /**
@@ -54,7 +68,6 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         $this->registerMethod("getContainerDetails");
         $this->registerMethod("createContainer");
         $this->registerMethod("deleteContainer");
-        $this->registerMethod("modifyContainer");
         $this->registerMethod("openContainer");
         $this->registerMethod("closeContainer");
         $this->registerMethod("addContainerKey");
@@ -477,25 +490,35 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     And containing either passphrase or key file fields:
      *     \em passphrase The passphrase to unlock the device.
      *     \em keyfile Path to the uploaded key file to unlock the device.
+     *     \em unlockatboot A boolean value representing whether to unlock
+     *         the encrypted device at boot or not.
      * @param context The context of the caller.
-     * @return None.
+     * @return The stored configuration object, or null if not appropriate.
      * @throw E_MISC_DEVICE_NOT_FOUND
      * @throw E_MISC_FAILURE
      * @throw E_EXEC_FAILED
      * @throw E_EXEC_MISC
+     * @throw E_CONFIG_OBJECT_UNIQUENESS
+     * @throw E_CONFIG_SET_OBJECT_FAILED
      */
     public function createContainer($params, $context) {
+        global $xmlConfig;
         // Validate the RPC caller context.
         $this->validateMethodContext($context, array(
             "role" => OMV_ROLE_ADMINISTRATOR
         ));
+        // pre-validation processing of params array, needed for, e.g.,
+        // mapping JSON 'on/off' back to boolean. TODO: implement this in
+        // the upload proxy instead?
+        $params['unlockatboot'] = boolval($params['unlockatboot']);
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, '{
             "type":"object",
             "properties":{
                 "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
                 "passphrase":	{"type":"string", "optional":"true"},
-                "keyfile":	    {"type":"string", "optional":"true"}
+                "keyfile":	    {"type":"string", "optional":"true"},
+                "unlockatboot": {"type":"boolean"}
             }
         }');
         // Get the storage device object.
@@ -556,12 +579,61 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
         }
+        // If unlock at boot is enabled, store the key file and save the config.
+        if ($params['unlockatboot']) {
+            $str = $this->generateContainerString($luks);
+            $storedKey = "/etc/openmediavault/luks/LUKS_".$str.".key";
+            if (!copy($key, $storedKey) ||
+                //!chgrp($storedKey, "openmediavault-engined") ||
+                !chmod($storedKey, 0400)) {
+                    if(file_exists($storedKey)) {
+                        // secure cleanup
+                        $cmd = sprintf("export LANG=C; shred -u %s ",
+                                        escapeshellarg($storedKey));
+                        @OMVUtil::exec($cmd, $output, $result);
+                        if ($result !== 0) {
+                            $this->debug($output);
+                            // fall back to PHP deletion
+                            unlink($storedKey);
+                        }
+                    }
+                    throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                        gettext("Unable to save the key file"));
+            }
+            // Prepare the configuration object.
+            $cfg = array(
+                "uuid"          => OMVUtil::uuid(),
+                "devicefile"    => $luks->getDeviceFileById(),
+                "keyfile"       => $storedKey,
+                "unlockatboot"  => boolval($params["unlockatboot"])
+            );
+
+            // Set the configuration object.
+            $xPath = sprintf(
+                "%s[devicefile='%s']",
+                $this->containerXPath,
+                $luks->getDeviceFileById()
+            );
+            if ($xmlConfig->exists($xPath) === TRUE) {
+                throw new OMVException(
+                    OMVErrorMsg::E_CONFIG_OBJECT_UNIQUENESS,
+                      gettext("Settings already exist for the encrypted device.")
+                );
+            }
+            if ($xmlConfig->set($this->configXPath,
+                                array("container" => $cfg)) !== TRUE) {
+                throw new OMVException(
+                    OMVErrorMsg::E_CONFIG_SET_OBJECT_FAILED
+                );
+            }
+        }
         // Notify configuration changes.
         $dispatcher = &OMVNotifyDispatcher::getInstance();
         $dispatcher->notify(OMV_NOTIFY_CREATE,
-            "org.openmediavault.system.storage.luks.container", array(
-                "devicefile" => $params['devicefile']
-        ));
+                            $this->containerEventMessagePath,
+                            $cfg);
+        // Return the configuration object.
+		return isset($cfg) ? $cfg : NULL;
     }
 
     /**
@@ -600,51 +672,8 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Notify configuration changes.
         $dispatcher = &OMVNotifyDispatcher::getInstance();
         $dispatcher->notify(OMV_NOTIFY_DELETE,
-            "org.openmediavault.system.storage.luks.container", array(
+            $this->containerEventMessagePath, array(
                 "devicefile" => $params['devicefile']
-        ));
-    }
-
-    /**
-     * Modify a LUKS container.
-     * @param params An array containing the following fields:
-     *     \em UUID The UUID of the LUKS container device.
-     *     \em devicefile The device file of the container to modify.
-     *     \em openatboot A boolean value representing whether to unlock
-     *         the encrypted device at boot or not.
-     * @param context The context of the caller.
-     * @return None.
-     * @throw E_MISC_FAILURE
-     */
-    public function modifyContainer($params, $context) {
-        // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
-        // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "openatboot":   {"type":"boolean"}
-            }
-        }');
-        // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
-        if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("LUKS container on '%s' not found"),
-                        $params['devicefile']));
-        }
-        // Set the unlock at boot status
-        // TODO: change crypttab method
-        // Notify configuration changes.
-        $dispatcher = &OMVNotifyDispatcher::getInstance();
-        $dispatcher->notify(OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.storage.luks.container", array(
-                "devicefile" => $params['devicefile'],
-                "openatboot" => array_boolval($params, "openatboot")
         ));
     }
 
@@ -957,19 +986,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         chmod($tmpFilePath, 0600);
         chgrp($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
         chown($tmpFilePath, $GLOBALS['OMV_WEBGUI_FILE_OWNERGROUP_NAME']);
-        // Build filename for file
-        $fn = preg_replace('/\s+/',
-                           '-',
-                           array(
-                                 $luks->getVendor(),
-                                 $luks->getModel(),
-                                 $luks->getSerialNumber(),
-                                 $luks->getUuid()
-                                )
-                          );
         // Return values required by generic download RPC implementation.
+        $str = $this->generateContainerString($luks);
         return array(
-            "filename"       => "LUKS_header_".implode('_', $fn).".bak",
+            "filename"       => "LUKS_header_".$str.".bak",
             "filepath"       => $tmpFilePath,
             "contenttype"    => "application/octet-stream",
             "unlink"         => TRUE
@@ -1058,6 +1078,30 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 $params['devicefile'],
                 $luks->getLastError()));
         }
+    }
+
+    /**
+     * Helper function for naming header backup and key files for containers.
+     * @param container An OMVLuksContainer object.
+     * @return A sanitised string, unique to the disk/container,
+     *          in the following format: VENDOR_MODEL_SERIALNUMBER_LUKSUUID.
+     */
+    private function generateContainerString($container) {
+        try {
+            $details = preg_replace('/\s+/',
+                                   '-',
+                                   array(
+                                         $container->getVendor(),
+                                         $container->getModel(),
+                                         $container->getSerialNumber(),
+                                         $container->getUuid()
+                                        )
+                                  );
+            $str = implode('_', $details);
+        } catch (Exception $e) {
+            $str = "";
+        }
+        return $str;
     }
 }
 

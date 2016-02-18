@@ -22,10 +22,12 @@
  * along with OpenMediaVault. If not, see <http://www.gnu.org/licenses/>.
  */
 require_once("openmediavault/module.inc");
+require_once("openmediavault/config.inc");
 require_once("openmediavault/error.inc");
+require_once("openmediavault/system.inc");
 
 class OMVModuleLuks extends OMVModuleServiceAbstract
-  implements OMVINotifyListener, OMVIModuleNotification {
+  implements OMVINotifyListener {
     /**
      * Get the module name.
      */
@@ -33,17 +35,7 @@ class OMVModuleLuks extends OMVModuleServiceAbstract
         return "luks";
     }
 
-    /**
-     * Defines the modules that if present should start before the service
-     * provided by this module.
-     * @return An array of modules.
-     */
-    public function shouldStart() { return array("email"); }
 
-    /**
-     * Generate the configuration.
-     * @throw E_EXEC_FAILED
-     */
     public function applyConfig() {
         $cmd = sprintf("export LANG=C; omv-mkconf %s 2>&1", $this->getName());
         if(0 !== $this->exec($cmd, $output)) {
@@ -73,14 +65,14 @@ class OMVModuleLuks extends OMVModuleServiceAbstract
             OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
             "org.openmediavault.system.storage.luks.container",
             array($this, "setDirty"));
-        $dispatcher->addListener(
-            OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.email",
-            array($this, "setDirty"));
-        $dispatcher->addListener(
-            OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.notification.notifications",
-            array($this, "setDirty"));
+        // $dispatcher->addListener(
+        //     OMV_NOTIFY_MODIFY,
+        //     "org.openmediavault.system.email",
+        //     array($this, "setDirty"));
+        // $dispatcher->addListener(
+        //     OMV_NOTIFY_MODIFY,
+        //     "org.openmediavault.system.notification.notifications",
+        //     array($this, "setDirty"));
     }
 }
 
