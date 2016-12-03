@@ -1,3 +1,9 @@
+openmediavault-luksencryption (3.0.0) UNRELEASED; urgency=medium
+
+  * Port to OMV 3.0.54
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Sat, 03 Dec 2016 12:42:54 -0600
+
 openmediavault-luksencryption (2.1.2) stable; urgency=medium
 
   * Bugfix: opening LUKS-on-LVM devices would fail.

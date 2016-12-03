@@ -3,20 +3,20 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
  *
- * OpenMediaVault is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * OpenMediaVault is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with OpenMediaVault. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 // require("js/omv/WorkspaceManager.js")
 // require("js/omv/workspace/grid/Panel.js")
@@ -76,11 +76,11 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
         var me = this;
         me.callParent(arguments);
         me.on("show", function() {
-                       // Set focus to field 'Passphrase'.
-                       var field = me.fp.findField("passphrase");
-                       if (!Ext.isEmpty(field))
-                               field.focus(false, 500);
-               }, me);
+            // Set focus to field 'Passphrase'.
+            var field = me.fp.findField("passphrase");
+            if (!Ext.isEmpty(field))
+                field.focus(false, 500);
+        }, me);
     },
 
     getFormItems: function() {

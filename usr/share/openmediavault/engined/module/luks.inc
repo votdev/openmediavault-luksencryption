@@ -1,31 +1,27 @@
 <?php
 /**
- * This file is part of OpenMediaVault.
- *
  * @license   http://www.gnu.org/licenses/gpl.html GPL Version 3
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
  *
- * OpenMediaVault is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * OpenMediaVault is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with OpenMediaVault. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once("openmediavault/module.inc");
-require_once("openmediavault/error.inc");
 
-class OMVModuleLuks extends OMVModuleServiceAbstract
-  implements OMVINotifyListener, OMVIModuleNotification {
+ class OMVModuleLuks extends \OMV\Engine\Module\ServiceAbstract
+    implements \OMV\Engine\Notify\IListener, \OMV\Engine\Module\INotification {
     /**
      * Get the module name.
      */
@@ -38,31 +34,29 @@ class OMVModuleLuks extends OMVModuleServiceAbstract
      * provided by this module.
      * @return An array of modules.
      */
-    public function shouldStart() { return array("email"); }
+    public function shouldStart() { return [ "email" ]; }
 
     /**
      * Generate the configuration.
      * @throw E_EXEC_FAILED
      */
     public function applyConfig() {
-        $cmd = sprintf("export LANG=C; omv-mkconf %s 2>&1", $this->getName());
-        if(0 !== $this->exec($cmd, $output)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-                $cmd, implode("\n", $output));
-        }
+        $cmd = new \OMV\System\Process("omv-mkconf", "luks");
+        $cmd->setRedirect2to1();
+        $cmd->execute();
     }
 
     /**
      * Get the notification configuration.
      */
     public function getNotificationConfig() {
-        return array(
-            array(
+        return [
+            [
                 "id"    => "luks",
                 "type"  => getText("Storage"),
                 "title" => gettext("Encryption")
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -72,18 +66,14 @@ class OMVModuleLuks extends OMVModuleServiceAbstract
         $dispatcher->addListener(
             OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
             "org.openmediavault.system.storage.luks.container",
-            array($this, "setDirty"));
+            [ $this, "setDirty" ]);
         $dispatcher->addListener(
             OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.email",
-            array($this, "setDirty"));
+            "org.openmediavault.conf.system.notification.email",
+            [ $this, "setDirty" ]);
         $dispatcher->addListener(
             OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.notification.notifications",
-            array($this, "setDirty"));
+            "org.openmediavault.conf.system.notification.notification",
+            [ $this, "setDirty" ]);
     }
 }
-
-// Register module.
-$moduleMgr = &OMVModuleMgr::getInstance();
-$moduleMgr->registerModule(new OMVModuleLuks());
