@@ -1,36 +1,26 @@
 <?php
 /**
- * This file is part of OpenMediaVault.
- *
  * @license   http://www.gnu.org/licenses/gpl.html GPL Version 3
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
  *
- * OpenMediaVault is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * OpenMediaVault is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with OpenMediaVault. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once("openmediavault/object.inc");
-require_once("openmediavault/error.inc");
-require_once("openmediavault/system.inc");
-require_once("openmediavault/functions.inc");
-require_once("openmediavault/luks.inc");
-require_once("openmediavault/rpcservice.inc");
-require_once("openmediavault/notify.inc");
-include_once("openmediavault/lvm.inc");
 
-class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
+class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
 
     private $mountOnUnlock = TRUE;
 
@@ -77,28 +67,23 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function enumerateContainers($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Enumerate all LUKS containers on the system.
-        if (FALSE === ($devs = OMVLuksContainers::enumerate())) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Unable to get list of encrypted devices"));
-        }
-        $result = array();
+        $devs = \OMV\System\Storage\Lvm\PhysicalVolume::enumerate();
+        $result = [];
         foreach($devs as $devk => $devv) {
             // Get the container details.
-            $luks = new OMVLuksContainer($devv);
+            $luks = new \OMV\System\Storage\Luks\Container($devv);
             if(!$luks->exists())
                 continue;
-            $result[] = array(
+            $result[] = [
                 "devicefile"            => $luks->getDeviceFile(),
                 "uuid"                  => $luks->getUuid(),
                 "size"                  => $luks->getSize(),
                 "unlocked"              => $luks->isOpen(),
                 "decrypteddevicefile"   => $luks->getDecryptedDeviceFile(),
                 "usedslots"             => $luks->getUsedKeySlots()
-            );
+            ];
         }
         return $result;
     }
@@ -116,21 +101,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      *     array. An exception will be thrown in case of an error.
      */
     public function getContainersList($params, $context) {
-        global $xmlConfig;
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "start":        {"type":"integer"},
-                "limit":        {'.$GLOBALS['OMV_JSONSCHEMA_COUNTFIELD'].'},
-                "sortfield":    {'.$GLOBALS['OMV_JSONSCHEMA_SORTFIELD'].'},
-                "sortdir":      {'.$GLOBALS['OMV_JSONSCHEMA_SORTDIR'].'}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.common.getlist");
         // Enumerate all LUKS containers on the system.
         $containers = $this->callMethod("enumerateContainers", NULL, $context);
         foreach($containers as $luksk => &$luksv) {
@@ -138,8 +112,8 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             // If open, does the container contain a filesystem and is it known
             // or used (i.e. a configured mntent, aka referenced in /etc/fstab)?
             if(!is_null($used)) {
-                if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
-                    array("id" => $luksv['decrypteddevicefile']), $context))) {
+                if (FALSE !== \OMV\Rpc\Rpc::call("FsTab", "getByFsName",
+                    [ "id" => $luksv['decrypteddevicefile'] ], $context))) {
                         $used = TRUE;
                 }
             }
@@ -148,11 +122,11 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Filter result.
         return $this->applyFilter($containers,
-                                    $params['start'],
-                                    $params['limit'],
-                                    $params['sortfield'],
-                                    $params['sortdir']
-                                 );
+            $params['start'],
+            $params['limit'],
+            $params['sortfield'],
+            $params['sortdir']
+        );
     }
 
     /**
@@ -164,46 +138,47 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @throw E_EXEC_MISC
      */
     public function getContainerCandidates($params, $context) {
-        global $xmlConfig;
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Get a list of all potential usable devices.
-        if (FALSE === ($devs = OMVStorageDevices::enumerateUnused())) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                gettext("Unable to get a list of unused devices"));
-        }
+        if (FALSE === ($devs = \OMV\System\Storage\StorageDevice::enumerateUnused()))
+            throw new \OMV\Exception("Failed to get list of unused devices.");
         // Prepare the result list.
-        $result = array();
+        $result = [];
         foreach ($devs as $devk => $devv) {
             // Get the object that implements the given storage device.
-            $sd = OMVStorageDeviceFactory::get($devv);
+            $sd = \OMV\System\Storage\StorageDevice::getStorageDevice($devv);
             if (is_null($sd) || !$sd->exists())
                 continue;
             // Skip read-only devices like CDROM.
             if (TRUE === $sd->isReadOnly())
                 continue;
             // Check if device is referenced/used by a plugin.
-            $xpath = sprintf("//services/devicefile[contains(.,'%s')]",
-                                $sd->getDeviceFile());
-            if (TRUE === $xmlConfig->exists($xpath))
+            $db = \OMV\Config\Database::getInstance();
+            if (TRUE === $db->exists("conf.service", [
+                  "operator" => "stringContains",
+                  "arg0" => "devicefile",
+                  "arg1" => $sd->getDeviceFile()
+              ]))
                 continue;
             // Does this device already contain a filesystem?
-            if (FALSE !== OMVFilesystem::hasFileSystem($sd->getDeviceFile()))
+            if (FALSE !== \OMV\System\Filesystem\Filesystem::hasFileSystem(
+              $sd->getDeviceFile()))
                 continue;
             // Is the device an already open LUKS container?
             // Don't allow LUKS-on-LUKS
-            $luks = new OMVStorageDeviceLUKS($sd->getDeviceFile());
+            $luks = new \OMV\Storage\Device\LUKS($sd->getDeviceFile());
             if (TRUE === $luks->isLuks())
                 continue;
             // The device is a potential candidate
             // to be used as a LUKS container.
-            $result[] = array(
+            $result[] = [
                 "devicefile"    => $sd->getDeviceFile(),
                 "size"          => $sd->getSize(),
+                "vendor"        => $sd->getVendor(),
+                "serialnumber"  => $sd->getSerialNumber(),
                 "description"   => $sd->getDescription()
-            );
+            ];
         }
         return $result;
     }
@@ -218,22 +193,14 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function getContainerDetails($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Get LUKS header details.
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\Luks\Container($params['devicefile']);
         if(FALSE === $luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("LUKS container on '%s' not found"),
-                        $params['devicefile']));
+            throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
+                $params['devicefile']));
         }
         return $luks->getDetail();
     }
@@ -252,27 +219,15 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @throw E_EXEC_MISC
      */
     public function openContainer($params, $context) {
-        global $xmlConfig;
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-                "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":	{"type":"string", "optional":"true"},
-                "keyfile":	    {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.opencontainer");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("LUKS container on '%s' not found"),
-                        $params['devicefile']));
+            throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
+                $params['devicefile']));
         }
         // Check that the container is not already open, then use
         // the supplied passphrase or key file to unlock it if not.
@@ -285,13 +240,12 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 $keyIsFile = FALSE;
             }
             if ($luks->open($key, $keyIsFile) === FALSE) {
-                throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                    sprintf(gettext("Unable to unlock encrypted device: %s"),
-                            $luks->getLastError()));
+                throw new \OMV\Exception(sprintf(gettext("Unable to unlock encrypted device: %s"),
+                    $luks->getLastError()));
             }
         }
         /* Downstream operations with the decrypted container */
-        $sdluks = new OMVStorageDeviceLUKS($luks->getDecryptedDeviceFile());
+        $sdluks = new \OMV\Storage\Device\LUKS($luks->getDecryptedDeviceFile());
         $df = $sdluks->getDeviceFile();
         // If the container contains an LVM physical volume, determine the
         // volume group and activate it (otherwise the logical volume and any
@@ -304,11 +258,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             }
         } else {
             // Fall back to manual method without LVM plugin
-            $cmd = sprintf("export LANG=C; pvdisplay --noheadings ".
-                            "-C -o vg_name %s ",
-                            escapeshellarg($df));
-            @OMVUtil::exec($cmd, $output, $result);
-            if($result === 0) {
+            $cmd = sprintf("export LANG=C; pvdisplay --noheadings -C -o vg_name %s",
+                escapeshellarg($df)
+            );
+            if (0 === $this->exec($cmd, $output)) {
                 $vgName = trim($output[0]);
             }
         }
@@ -319,10 +272,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         if (isset($vgName)) {
             $this->debug(sprintf("%s contains an LVM2 PV, part of VG: %s",
                                  $df, $vgName));
-            $cmd = sprintf("export LANG=C; vgchange -a y %s ",
-                            escapeshellarg($vgName));
-            @OMVUtil::exec($cmd, $output, $result);
-            if($result !== 0) {
+            $cmd = sprintf("export LANG=C; vgchange -a y %s",
+                escapeshellarg($vgName)
+            );
+            if (0 !== $this->exec($cmd, $output)) {
                 $this->debug($output);
             } else {
                 if (class_exists("OMVLvmVolumeGroup")) {
@@ -335,7 +288,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             }
         } else {
             // If not an LVM2 PV, just pass the container devicefile
-            $fsDevs = array($df);
+            $fsDevs = [ $df ];
         }
         // If the container contains a (referenced) filesystem, then mount it
         // (unless this automounting is disabled by the global configuration
@@ -355,10 +308,10 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @return None.
      */
     private function mountContainerFS($deviceFile, $context) {
-        if(FALSE !== OMVRpc::exec("FileSystemMgmt", "hasFilesystem",
-                        array("devicefile" => $deviceFile), $context)) {
-            if(FALSE !== ($meObject = OMVRpc::exec("FsTab", "getByFsName",
-                            array("id" => $deviceFile), $context))) {
+        if (FALSE !== \OMV\Rpc\Rpc::call("FileSystemMgmt", "hasFilesystem",
+                [ "devicefile" => $deviceFile ], $context)) {
+            if (FALSE !== \OMV\Rpc\Rpc::call("FsTab", "getByFsName",
+                    [ "id" => $devicefile ], $context))) {
                 switch (strtolower($meObject['type'])) {
                 case "btrfs":
                     /**
@@ -383,8 +336,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                                     "show %s | grep 'Total devices' | ".
                                     "awk '{print $3}'",
                                     escapeshellarg($meObject['uuid']));
-                    @OMVUtil::exec($cmd, $output, $result);
-                    if($result !== 0) {
+                    if (0 !== $this->exec($cmd, $output)) {
                         $this->setLastError($output);
                         continue;
                     }
@@ -398,8 +350,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                     $cmd = sprintf("export LANG=C; btrfs filesystem ".
                                     "show %s | grep 'devid' | wc -l",
                                     escapeshellarg($meObject['uuid']));
-                    @OMVUtil::exec($cmd, $output, $result);
-                    if($result !== 0) {
+                    if (0 !== $this->exec($cmd, $output)) {
                         $this->setLastError($output);
                         continue;
                     }
@@ -420,11 +371,11 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
                 case "vfat":
                 case "ntfs":
                 default:
-                    OMVRpc::exec("FileSystemMgmt", "mount",
-                        array(
-                                "id" => $meObject['fsname'],
-                                "fstab" => FALSE
-                             ),
+                    \OMV\Rpc\Rpc::call("FileSystemMgmt", "mount",
+                        [
+                            "id" => $meObject['fsname'],
+                            "fstab" => FALSE
+                        ],
                         $context);
                 }
             }
@@ -441,31 +392,22 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      * @throw E_EXEC_MISC
      */
     public function closeContainer($params, $context) {
-        global $xmlConfig;
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.devicefile");
+
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
-                sprintf(gettext("LUKS container on '%s' not found"),
-                        $params['devicefile']));
+            throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
+                $params['devicefile']));
         }
         // Check if the container is open, and proceed to close it if so
         if (TRUE === $luks->isOpen()) {
             if (FALSE === $luks->close()) {
-                throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
-                    sprintf(gettext("Unable to lock encrypted device: %s"),
-                            $luks->getLastError()));
+                throw new \OMV\Exception(sprintf(gettext("Unable to lock encrypted device: %s"),
+                    $luks->getLastError()));
             }
         }
     }
@@ -486,29 +428,20 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function createContainer($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":	{"type":"string", "optional":"true"},
-                "keyfile":	    {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.createcontainer");
         // Get the storage device object.
         $sd = OMVStorageDeviceFactory::get($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_DEVICE_NOT_FOUND,
-                $params['devicefile']);
+            throw new \OMV\Exception(sprintf(gettext("Device '%s' not found"),
+                $params['devicefile']));
         }
         // Get the storage device backend of the given device.
         $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
-                "No storage device backend exists for device %s",
+            throw new \OMV\Exception(sprintf(
+                gettext("No storage device backend exists for device %s"),
                 $sd->getDeviceFile()));
         }
         switch ($sdb->getType()) {
@@ -517,30 +450,24 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             // Wipe existing filesystems.
             $cmd = sprintf("export LANG=C; wipefs -a %s 2>&1",
                             $sd->getDeviceFile());
-            @OMVUtil::exec($cmd, $output, $result);
-            if ($result !== 0) {
-                throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-                    $cmd, implode("\n", $output));
+            if (0 !== $this->exec($cmd, $output)) {
+                throw new \OMV\Exception($cmd . implode("\n", $output));
             }
             break;
         default:
             // Wipe existing filesystems.
             $cmd = sprintf("export LANG=C; sgdisk --zap-all %s 2>&1",
                             escapeshellarg($sd->getDeviceFile()));
-            @OMVUtil::exec($cmd, $output, $result);
-            if ($result !== 0) {
-                throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-                    $cmd, implode("\n", $output));
+            if (0 !== $this->exec($cmd, $output)) {
+                throw new \OMV\Exception($cmd . implode("\n", $output));
             }
             break;
         }
         // Reread partition table.
         $cmd = sprintf("export LANG=C; partprobe %s",
                         escapeshellarg($sd->getDeviceFile()));
-        @OMVUtil::exec($cmd, $output, $result);
-        if ($result !== 0) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_FAILED,
-                $cmd, implode("\n", $output));
+        if (0 !== $this->exec($cmd, $output)) {
+            throw new \OMV\Exception($cmd . implode("\n", $output));
         }
         // Create the container.
         $luks = new OMVLuksContainer($sd->getDeviceFile());
@@ -552,16 +479,16 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             $keyIsFile = FALSE;
         }
         if ($luks->create($key, $keyIsFile) === FALSE) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("Unable to create the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
-        $dispatcher = &OMVNotifyDispatcher::getInstance();
+        $dispatcher = \OMV\Engine\Notify\Dispatcher::getInstance();
         $dispatcher->notify(OMV_NOTIFY_CREATE,
-            "org.openmediavault.system.storage.luks.container", array(
-                "devicefile" => $params['devicefile']
-        ));
+              "org.openmediavault.system.storage.luks.container",
+              [ "devicefile" => $params['devicefile'] ]
+        );
     }
 
     /**
@@ -574,35 +501,28 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function deleteContainer($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
         // Remove the container.
         if (!$luks->remove()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("Unable to remove the encrypted device: %s"),
                 $luks->getLastError()));
         }
         // Notify configuration changes.
-        $dispatcher = &OMVNotifyDispatcher::getInstance();
+        $dispatcher = \OMV\Engine\Notify\Dispatcher::getInstance();
         $dispatcher->notify(OMV_NOTIFY_DELETE,
-            "org.openmediavault.system.storage.luks.container", array(
-                "devicefile" => $params['devicefile']
-        ));
+              "org.openmediavault.system.storage.luks.container",
+              [ "devicefile" => $params['devicefile'] ]
+        );
     }
 
     /**
@@ -618,34 +538,28 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function modifyContainer($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "openatboot":   {"type":"boolean"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.modifycontainer");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
         // Set the unlock at boot status
         // TODO: change crypttab method
         // Notify configuration changes.
-        $dispatcher = &OMVNotifyDispatcher::getInstance();
+        // Notify configuration changes.
+        $dispatcher = \OMV\Engine\Notify\Dispatcher::getInstance();
         $dispatcher->notify(OMV_NOTIFY_MODIFY,
-            "org.openmediavault.system.storage.luks.container", array(
+            "org.openmediavault.system.storage.luks.container",
+            [
                 "devicefile" => $params['devicefile'],
                 "openatboot" => array_boolval($params, "openatboot")
-        ));
+            ]
+        );
     }
 
     /**
@@ -665,25 +579,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function addContainerKey($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "oldpassphrase":    {"type":"string", "optional":"true"},
-                "newpassphrase":    {"type":"string", "optional":"true"},
-                "oldkeyfile":       {"type":"string", "optional":"true"},
-                "newkeyfile":       {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.containerkey");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -704,7 +606,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Add the key
         if (FALSE === $luks->addKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+            throw new \OMV\Exception(
                 sprintf(gettext("Unable to add the key to the encrypted device: %s"),
                         $luks->getLastError()));
         }
@@ -727,25 +629,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function changeContainerKey($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":             {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":       {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "oldpassphrase":    {"type":"string", "optional":"true"},
-                "newpassphrase":    {"type":"string", "optional":"true"},
-                "oldkeyfile":       {"type":"string", "optional":"true"},
-                "newkeyfile":       {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.containerkey");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -766,7 +656,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
         // Add the key
         if (FALSE === $luks->changeKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+            throw new \OMV\Exception(
                 sprintf(gettext("Unable to change the key on the encrypted device: %s"),
                         $luks->getLastError()));
         }
@@ -787,24 +677,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function removeContainerKey($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "usedslots":    {"type":"integer", "optional":"true"},
-                "passphrase":	{"type":"string", "optional":"true"},
-                "keyfile":	    {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.removecontainerkey");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -817,7 +696,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
             $keyIsFile = FALSE;
         }
         if ($luks->removeKey($key, $keyIsFile) === FALSE) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+            throw new \OMV\Exception(
                 sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
                         $luks->getLastError()));
         }
@@ -839,23 +718,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function testContainerKey($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":	{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "passphrase":	{"type":"string", "optional":"true"},
-                "keyfile":	    {"type":"string", "optional":"true"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.opencontainer");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -865,7 +734,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         else
             $slot = $luks->testKey($params['passphrase']);
         if ($slot === FALSE) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC,
+            throw new \OMV\Exception(
               sprintf(gettext("The key did not unlock any key slot on the device")));
         } else {
             return $slot;
@@ -885,28 +754,19 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function killContainerKeySlot($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "keyslot":      { "type": "integer", "minimum":0, "maximum":7 }
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.containerkeyslot");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
         // Kill the key slot.
         if (!$luks->killSlot($params['keyslot'])) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("Unable to erase the key slot on the encrypted device: %s"),
                 $luks->getLastError()));
         }
@@ -926,20 +786,13 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function backupContainerHeader($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":{'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Validate the container
         $luks = new OMVLuksContainer($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+            throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
                         $params['devicefile']));
         }
@@ -947,7 +800,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // file mode/owner to allow the WebGUI PHP backend to unlink it.
         $tmpFilePath = sys_get_temp_dir()."/".uniqid("luksHeader");
         if (!$luks->backupHeader($tmpFilePath)) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("Unable to extract the LUKS header from ".
                         "the encrypted device: %s"),
                 $luks->getLastError()));
@@ -960,20 +813,20 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Build filename for file
         $fn = preg_replace('/\s+/',
                            '-',
-                           array(
+                            [
                                  $luks->getVendor(),
                                  $luks->getModel(),
                                  $luks->getSerialNumber(),
                                  $luks->getUuid()
-                                )
-                          );
+                            ]
+        );
         // Return values required by generic download RPC implementation.
-        return array(
+        return [
             "filename"       => "LUKS_header_".implode('_', $fn).".bak",
             "filepath"       => $tmpFilePath,
             "contenttype"    => "application/octet-stream",
             "unlink"         => TRUE
-        );
+        ];
     }
 
     /**
@@ -993,39 +846,26 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
      */
     public function restoreContainerHeader($params, $context) {
         // Validate the RPC caller context.
-        $this->validateMethodContext($context, array(
-            "role" => OMV_ROLE_ADMINISTRATOR
-        ));
+        $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Validate the parameters of the RPC service method.
-        $this->validateMethodParams($params, '{
-            "type":"object",
-            "properties":{
-                "devicefile":   {'.$GLOBALS['OMV_JSONSCHEMA_DEVICEFILE'].'},
-                "uuid":         {'.$GLOBALS['OMV_JSONSCHEMA_UUID'].'},
-                "force":        {"type":"boolean"},
-                "filename":     {"type":"string"},
-                "filepath":     {"type":"string"}
-            }
-        }');
+        $this->validateMethodParams($params, "rpc.luks.containerheader");
         // Get the storage device object.
         $sd = OMVStorageDeviceFactory::get($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
-            throw new OMVException(OMVErrorMsg::E_MISC_DEVICE_NOT_FOUND,
-                $params['devicefile']);
+            throw new \OMV\Exception($params['devicefile']);
         }
         // Get the storage device backend of the given device.
         $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("No storage device backend exists for device %s"),
                 $sd->getDeviceFile()));
         }
         // Validate the new header
         $cmd = sprintf("export LANG=C; cryptsetup isLuks %s 2>&1",
                         $params['filepath']);
-        @OMVUtil::exec($cmd, $output, $result);
-        if ($result !== 0) {
-            throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+        if (0 !== $this->exec($cmd, $output)) {
+            throw new \OMV\Exception(
                 sprintf(gettext("%s is not a valid LUKS header backup file"),
                         $params['filename']));
         }
@@ -1033,11 +873,12 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         if($params['force'] === FALSE) {
             unset($cmd, $output, $result);
             $cmd = sprintf("export LANG=C; cryptsetup luksUUID %s 2>&1",
-                            $params['filepath']);
-            @OMVUtil::exec($cmd, $output, $result);
+                $params['filepath']
+            );
+            $this->exec($cmd, $output);
             $header_uuid = $output[0];
             if($header_uuid !== $params['uuid']) {
-                throw new OMVException(OMVErrorMsg::E_MISC_FAILURE,
+                throw new \OMV\Exception(
                     sprintf(gettext("The UUID of the LUKS header backup file ".
                             "doesn't match the device. If you are sure you ".
                             "want to write this header to the device, try ".
@@ -1052,7 +893,7 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         // Write the header to the device
         $luks = new OMVLuksContainer($params['devicefile']);
         if (!$luks->restoreHeader($params['filepath'])) {
-            throw new OMVException(OMVErrorMsg::E_EXEC_MISC, sprintf(
+            throw new \OMV\Exception(sprintf(
                 gettext("Unable to restore the LUKS header to ".
                         "device %s: %s"),
                 $params['devicefile'],
@@ -1060,7 +901,3 @@ class OMVRpcServiceLuksMgmt extends OMVRpcServiceAbstract {
         }
     }
 }
-
-// Register the RPC service.
-$rpcServiceMgr = &OMVRpcServiceMgr::getInstance();
-$rpcServiceMgr->registerService(new OMVRpcServiceLuksMgmt());
