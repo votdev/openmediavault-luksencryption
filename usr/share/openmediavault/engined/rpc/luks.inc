@@ -69,7 +69,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the RPC caller context.
         $this->validateMethodContext($context, ["role" => OMV_ROLE_ADMINISTRATOR]);
         // Enumerate all LUKS containers on the system.
-        $devs = \OMV\System\Storage\Lvm\PhysicalVolume::enumerate();
+        $devs = \OMV\System\Storage\Luks\Containers::enumerate();
         $result = [];
         foreach($devs as $devk => $devv) {
             // Get the container details.
@@ -224,7 +224,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.opencontainer");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
                 $params['devicefile']));
@@ -250,9 +250,9 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // If the container contains an LVM physical volume, determine the
         // volume group and activate it (otherwise the logical volume and any
         // filesystem on it won't be accessible)
-        if (class_exists("OMVLvmPhysicalVolume")) {
+        if (class_exists("\OMV\System\Storage\Lvm\PhysicalVolume")) {
             // Use LVM plugin if it's installed to get VG name
-            $pv = new OMVLvmPhysicalVolume($df);
+            $pv = new \OMV\System\Storage\Lvm\PhysicalVolume($df);
             if (TRUE === $pv->exists()) {
                 $vgName = $pv->getVGName();
             }
@@ -278,8 +278,8 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             if (0 !== $this->exec($cmd, $output)) {
                 $this->debug($output);
             } else {
-                if (class_exists("OMVLvmVolumeGroup")) {
-                    $vg = new OMVLvmVolumeGroup($vgName);
+                if (class_exists("\OMV\System\Storage\Lvm\VolumeGroup")) {
+                    $vg = new \OMV\System\Storage\Lvm\VolumeGroup($vgName);
                     $lvNames = $vg->getLVName();
                     $fsDevs = array_map(function($lv) use ($vgName) {
                                             return "/dev/$vgName-$lv";
@@ -398,7 +398,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         $this->validateMethodParams($params, "rpc.luks.devicefile");
 
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
                 $params['devicefile']));
@@ -432,13 +432,13 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.createcontainer");
         // Get the storage device object.
-        $sd = OMVStorageDeviceFactory::get($params['devicefile']);
+        $sd = \OMV\System\Storage\StorageDevice::get($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
             throw new \OMV\Exception(sprintf(gettext("Device '%s' not found"),
                 $params['devicefile']));
         }
         // Get the storage device backend of the given device.
-        $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
+        $sdb = \OMV\System\Storage\Backend\Manager::getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
             throw new \OMV\Exception(sprintf(
                 gettext("No storage device backend exists for device %s"),
@@ -470,7 +470,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             throw new \OMV\Exception($cmd . implode("\n", $output));
         }
         // Create the container.
-        $luks = new OMVLuksContainer($sd->getDeviceFile());
+        $luks = new \OMV\System\Storage\Luks\Container($sd->getDeviceFile());
         if(isset($params['keyfile']) && !empty($params['keyfile'])) {
             $key = $params['keyfile'];
             $keyIsFile = TRUE;
@@ -505,7 +505,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -542,7 +542,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.modifycontainer");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -583,7 +583,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.containerkey");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -633,7 +633,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.containerkey");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -681,7 +681,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.removecontainerkey");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -722,7 +722,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.opencontainer");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -758,7 +758,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.containerkeyslot");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -790,7 +790,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Validate the container
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (is_null($luks) || !$luks->exists()) {
             throw new \OMV\Exception(
                 sprintf(gettext("LUKS container on '%s' not found"),
@@ -850,12 +850,12 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.containerheader");
         // Get the storage device object.
-        $sd = OMVStorageDeviceFactory::get($params['devicefile']);
+        $sd = \OMV\System\Storage\StorageDevice::get($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
             throw new \OMV\Exception($params['devicefile']);
         }
         // Get the storage device backend of the given device.
-        $sdb = OMVStorageDevices::getBackend($sd->getDeviceFile());
+        $sdb = \OMV\System\Storage\Backend\Manager::getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
             throw new \OMV\Exception(sprintf(
                 gettext("No storage device backend exists for device %s"),
@@ -891,7 +891,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             }
         }
         // Write the header to the device
-        $luks = new OMVLuksContainer($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if (!$luks->restoreHeader($params['filepath'])) {
             throw new \OMV\Exception(sprintf(
                 gettext("Unable to restore the LUKS header to ".

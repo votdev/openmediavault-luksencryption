@@ -19,8 +19,8 @@
 
 use OMV\Config\Database;
 use OMV\System\Filesystem\Backend\Manager;
-use OMV\System\Filesystem\Backend\Cifs;
+use OMV\System\Filesystem\Backend\Luks;
 
 $database = Database::getInstance();
 $filesystemBackendManager = Manager::getInstance();
-$filesystemBackendManager->registerBackend(new Cifs($database));
+$filesystemBackendManager->registerBackend(new Luks($database));
