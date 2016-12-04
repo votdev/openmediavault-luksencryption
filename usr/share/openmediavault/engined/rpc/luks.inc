@@ -113,7 +113,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             // or used (i.e. a configured mntent, aka referenced in /etc/fstab)?
             if(!is_null($used)) {
                 if (FALSE !== \OMV\Rpc\Rpc::call("FsTab", "getByFsName",
-                    [ "id" => $luksv['decrypteddevicefile'] ], $context))) {
+                    [ "id" => $luksv['decrypteddevicefile'] ], $context)) {
                         $used = TRUE;
                 }
             }
@@ -311,7 +311,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         if (FALSE !== \OMV\Rpc\Rpc::call("FileSystemMgmt", "hasFilesystem",
                 [ "devicefile" => $deviceFile ], $context)) {
             if (FALSE !== \OMV\Rpc\Rpc::call("FsTab", "getByFsName",
-                    [ "id" => $devicefile ], $context))) {
+                    [ "id" => $devicefile ], $context)) {
                 switch (strtolower($meObject['type'])) {
                 case "btrfs":
                     /**

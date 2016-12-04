@@ -62,7 +62,7 @@
     /**
      * Bind listeners.
      */
-    function bindListeners(OMVNotifyDispatcher $dispatcher) {
+    function bindListeners(\OMV\Engine\Notify\Dispatcher $dispatcher) {
         $dispatcher->addListener(
             OMV_NOTIFY_CREATE | OMV_NOTIFY_MODIFY | OMV_NOTIFY_DELETE,
             "org.openmediavault.system.storage.luks.container",

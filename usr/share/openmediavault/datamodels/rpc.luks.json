@@ -77,7 +77,7 @@
 			"keyfile": {
 			    "type": "string",
 				"required": false
-			},
+			}
 		}
 	}
 },{
@@ -187,11 +187,11 @@
 			"force": {
 			    "type": "boolean",
 				"required": true
-			}
+			},
 			"filename": {
 			    "type": "string",
 				"required": true
-			}
+			},
 			"filepath": {
 			    "type": "string",
 				"required": true

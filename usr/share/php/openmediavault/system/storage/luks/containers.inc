@@ -19,10 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-use OMV\System;
-use OMV\System\Filesystem\Backend\Manager;
-use OMV\System\Process;
-
 namespace OMV\System\Storage\Luks;
 
 /**
@@ -39,7 +35,7 @@ class Containers {
      */
     public static function enumerate() {
         $cmd = "export LANG=C; blkid -t TYPE=crypto_LUKS -o device 2>/dev/null";
-        $process = new Process($cmd);
+        $process = new \OMV\System\Process($cmd);
         $process->execute($out, $result);
         if(!in_array($result, array(0,2), TRUE))
             return FALSE;
