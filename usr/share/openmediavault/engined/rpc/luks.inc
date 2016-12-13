@@ -113,7 +113,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             // or used (i.e. a configured mntent, aka referenced in /etc/fstab)?
             if(!is_null($used)) {
                 if (FALSE !== \OMV\Rpc\Rpc::call("FsTab", "getByFsName",
-                    [ "id" => $luksv['decrypteddevicefile'] ], $context)) {
+                    [ "fsname" => $luksv['decrypteddevicefile'] ], $context)) {
                         $used = TRUE;
                 }
             }
@@ -154,20 +154,14 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             if (TRUE === $sd->isReadOnly())
                 continue;
             // Check if device is referenced/used by a plugin.
-            $db = \OMV\Config\Database::getInstance();
-            if (TRUE === $db->exists("conf.service", [
-                  "operator" => "stringContains",
-                  "arg0" => "devicefile",
-                  "arg1" => $sd->getDeviceFile()
-              ]))
-                continue;
+            // Not implemented
             // Does this device already contain a filesystem?
             if (FALSE !== \OMV\System\Filesystem\Filesystem::hasFileSystem(
               $sd->getDeviceFile()))
                 continue;
             // Is the device an already open LUKS container?
             // Don't allow LUKS-on-LUKS
-            $luks = new \OMV\Storage\Device\LUKS($sd->getDeviceFile());
+            $luks = new \OMV\System\Storage\StorageDeviceLuks($sd->getDeviceFile());
             if (TRUE === $luks->isLuks())
                 continue;
             // The device is a potential candidate
@@ -197,7 +191,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.devicefile");
         // Get LUKS header details.
-        $luks = new \OMV\Luks\Container($params['devicefile']);
+        $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
         if(FALSE === $luks->exists()) {
             throw new \OMV\Exception(sprintf(gettext("LUKS container on '%s' not found"),
                 $params['devicefile']));
@@ -245,7 +239,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             }
         }
         /* Downstream operations with the decrypted container */
-        $sdluks = new \OMV\Storage\Device\LUKS($luks->getDecryptedDeviceFile());
+        $sdluks = new \OMV\System\Storage\StorageDeviceLuks($luks->getDecryptedDeviceFile());
         $df = $sdluks->getDeviceFile();
         // If the container contains an LVM physical volume, determine the
         // volume group and activate it (otherwise the logical volume and any
@@ -336,10 +330,8 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                                     "show %s | grep 'Total devices' | ".
                                     "awk '{print $3}'",
                                     escapeshellarg($meObject['uuid']));
-                    if (0 !== $this->exec($cmd, $output)) {
-                        $this->setLastError($output);
-                        continue;
-                    }
+                    $process = new Process($cmd);
+                    $process->execute($output,$result);
                     $totalDevices = (int)$output[0];
                     // If the fs has fewer than one device (an error
                     // of some kind occurred), skip mounting
@@ -350,10 +342,8 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                     $cmd = sprintf("export LANG=C; btrfs filesystem ".
                                     "show %s | grep 'devid' | wc -l",
                                     escapeshellarg($meObject['uuid']));
-                    if (0 !== $this->exec($cmd, $output)) {
-                        $this->setLastError($output);
-                        continue;
-                    }
+                    $process = new Process($cmd);
+                    $process->execute($output,$result);
                     $availableDevices = (int)$output[0];
                     // If not all devices are online, skip mounting
                     if($availableDevices !== $totalDevices)
@@ -432,13 +422,14 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.createcontainer");
         // Get the storage device object.
-        $sd = \OMV\System\Storage\StorageDevice::get($params['devicefile']);
+        $sd = \OMV\System\Storage\StorageDevice::getStorageDevice($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
             throw new \OMV\Exception(sprintf(gettext("Device '%s' not found"),
                 $params['devicefile']));
         }
         // Get the storage device backend of the given device.
-        $sdb = \OMV\System\Storage\Backend\Manager::getBackend($sd->getDeviceFile());
+        $mngr = \OMV\System\Storage\Backend\Manager::getInstance();
+        $sdb = $mngr->getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
             throw new \OMV\Exception(sprintf(
                 gettext("No storage device backend exists for device %s"),

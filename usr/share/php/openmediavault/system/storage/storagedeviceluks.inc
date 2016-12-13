@@ -25,7 +25,66 @@ namespace OMV\System\Storage;
  * Class for handling an open LUKS container,
  * i.e. from the decrypted device point of view.
  */
-class Luks extends StorageDevice {
+class StorageDeviceLuks extends StorageDeviceDM {
+
+    public function getLuksEncryptedDeviceFile() {
+        if(FALSE === ($slaves = $this->getSlaves()))
+            return FALSE;
+        if(count($slaves)!=1)
+            return FALSE;
+        return $slaves[0];  // Should only be one slave, just return the first
+    }
+
+     /**
+     * Get the canonical device file, e.g. /dev/disk/by-label/root -> /dev/sda
+     * @return A device file string (/dev/sda), otherwise FALSE.
+     */
+    public function getCanonicalLuksEncryptedDeviceFile() {
+        if(FALSE === ($dev = $this->getLuksEncryptedDeviceFile()))
+            return FALSE;
+        return realpath($dev);
+    }
+
+    /**
+     * Get the base (slave) device name of the container
+     * @param canonical If set to TRUE the canonical device file will
+     *   be used. Defaults to FALSE.
+     * @return A device name (sdb), otherwise FALSE.
+     */
+    public function getLuksEncryptedDeviceName($canonical = FALSE) {
+        $deviceName = str_replace("/dev/", "", !$canonical ?
+                                  $this->getLuksEncryptedDeviceFile() :
+                                  $this->getCanonicalLuksEncryptedDeviceFile());
+        return $deviceName;
+    }
+
+    /**
+     * Get the container (encrypted device) that backs
+     * (i.e. is the slave of) this decrypted (open) device
+     * @return An Container object
+     */
+    public function getContainer() {
+        return new \OMV\System\Storage\Luks\Container($this->getLuksEncryptedDeviceFile());
+    }
+
+    /**
+     * Checks if the container exists - synonym for isLuks().
+     * @return TRUE if the container exists, otherwise FALSE.
+     */
+    public function exists() {
+        return $this->isLuks();
+    }
+
+    /**
+     * Checks if the device exists and is a LUKS container
+     * @return TRUE if the device is a LUKS container, otherwise FALSE.
+     */
+    public function isLuks() {
+        if(FALSE === ($dev = $this->getLuksEncryptedDeviceFile()))
+            return FALSE;
+        // Test whether the slave is a LUKS container or not
+        return \OMV\System\Storage\Luks\Container::isLuksContainer($dev);
+    }
 
     /**
      * Get the underlying device model.

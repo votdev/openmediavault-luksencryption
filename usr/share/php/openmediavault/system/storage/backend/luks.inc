@@ -45,11 +45,11 @@ class LUKS extends DM {
         if(FALSE === parent::isTypeOf($deviceFile))
             return FALSE;
         // Check if it is an open LUKS container.
-        $object = new \OMV\System\Storage\Luks($deviceFile);
+        $object = new \OMV\System\Storage\StorageDeviceLuks($deviceFile);
         return $object->isLuks();
     }
 
     function getImpl($args) {
-        return new \OMV\System\Storage\Luks($args);
+        return new \OMV\System\Storage\StorageDeviceLuks($args);
     }
 }

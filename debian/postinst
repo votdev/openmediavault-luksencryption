@@ -9,8 +9,13 @@ case "$1" in
     configure)
         # Activate package triggers. These triggers are only set during the
         # package installation.
+	object="<uuid>$(omv_uuid)</uuid>"
+	object="${object}<id>luks</id>"
+	object="${object}<enable>0</enable>"
+	omv_config_add_node_data "/config/system/notification/notifications" "notification" "${object}"
         dpkg-trigger update-fixperms
         dpkg-trigger update-locale
+
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

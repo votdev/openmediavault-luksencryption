@@ -36,6 +36,7 @@ class Containers {
     public static function enumerate() {
         $cmd = "export LANG=C; blkid -t TYPE=crypto_LUKS -o device 2>/dev/null";
         $process = new \OMV\System\Process($cmd);
+        $process->setQuiet();
         $process->execute($out, $result);
         if(!in_array($result, array(0,2), TRUE))
             return FALSE;
@@ -44,7 +45,7 @@ class Containers {
         //   /dev/sdc
         //   /dev/sdd
         //   unknown device
-        foreach($output as $outputk => $outputv) {
+        foreach($out as $outputk => $outputv) {
             $deviceFile = trim($outputv);
             if(!is_devicefile($deviceFile))
                 continue;
