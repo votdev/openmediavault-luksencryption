@@ -129,13 +129,11 @@ class UploadExtras extends Upload {
         foreach($_FILES as $key => $file) {
             if(!in_array($file['error'],
                 array(UPLOAD_ERR_OK, UPLOAD_ERR_NO_FILE))) {
-                throw new OMVException( OMVErrorMsg::E_MISC_FAILURE,
-                    $this->codeToMessage($file['error']));
+                throw new \OMV\Exception( $this->codeToMessage($file['error']));
             }
             if($file['error']===UPLOAD_ERR_OK &&
                 !is_uploaded_file($file['tmp_name'])) {
-                throw new OMVException( OMVErrorMsg::E_MISC_FAILURE,
-                    "Invalid upload request.");
+                throw new \OMV\Exception("Invalid upload request.");
             }
             // Modify the service method parameters.
             if($file['error']===UPLOAD_ERR_OK)
@@ -171,8 +169,9 @@ class UploadExtras extends Upload {
                 is_uploaded_file($file['tmp_name'])) {
                 $cmd = sprintf("export LANG=C; shred -u %s ",
                                 escapeshellarg($file['tmp_name']));
-                @OMVUtil::exec($cmd, $output, $result);
-                if ($result !== 0) {
+                $process = new \OMV\System\Process($cmd);
+                $process->execute($output,$result);
+                 if ($result !== 0) {
                     $this->debug($output);
                     // fall back to PHP deletion
                     if(file_exists($file['tmp_name']))
