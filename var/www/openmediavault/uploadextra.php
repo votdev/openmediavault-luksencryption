@@ -5,20 +5,20 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
  *
- * OpenMediaVault is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * OpenMediaVault is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with OpenMediaVault. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 try {
     function exception_error_handler($errno, $errstr, $errfile, $errline) {
@@ -26,32 +26,23 @@ try {
         case E_STRICT:
             break;
         default:
-            throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
             break;
         }
     }
     set_error_handler("exception_error_handler");
 
+    require_once("openmediavault/autoloader.inc");
     require_once("openmediavault/env.inc");
-    require_once("openmediavault/config.inc"); // Must be included here
-    require_once("openmediavault/session.inc");
-    require_once("openmediavault/rpcproxyextra.inc");
 
-    $session = &OMVSession::getInstance();
+    $session = &\OMV\Session::getInstance();
     $session->start();
+    $session->validate();
 
-    if($session->isAuthenticated()) {
-        $session->validate();
-        // Do not update last access time
-        //$session->updateLastAccess();
-    } else {
-        throw new OMVException(OMVErrorMsg::E_SESSION_NOT_AUTHENTICATED);
-    }
-
-    $server = new OMVExtrasUploadRpcProxy(); // Use custom extended upload handler
+    $server = new \OMV\Rpc\Proxy\UploadExtras(); // Use custom extended upload handler
     $server->handle();
     $server->cleanup();
-} catch(Exception $e) {
+} catch(\Exception $e) {
     if (isset($server))
         $server->cleanup();
     header("Content-Type: text/html");
