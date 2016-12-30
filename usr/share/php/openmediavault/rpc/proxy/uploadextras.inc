@@ -82,8 +82,6 @@ class UploadExtras extends Upload {
         // remove the field from the params array before validation.
         if(array_key_exists("MAX_FILE_SIZE", $this->params)) {
             $this->maxFileSize = $this->params['MAX_FILE_SIZE'];
-            $this->debug(sprintf("Max upload file size set to %d MB",
-                                    $this->maxFileSize/1048576));
             unset($this->params['MAX_FILE_SIZE']);
         }
         // Move non-file fields into params array before validation
@@ -139,8 +137,6 @@ class UploadExtras extends Upload {
             if($file['error']===UPLOAD_ERR_OK)
                 $this->params['params'][$key] = $file['tmp_name'];
         }
-        $this->debug(sprintf("\$this->params array: %s",
-                                print_r($this->params, TRUE)));
     }
 
     /**
@@ -149,10 +145,8 @@ class UploadExtras extends Upload {
      */
     public function cleanup() {
           if($this->secureDeletion === TRUE) {
-              $this->debug("Cleanup: shredding temporary files");
               $this->shredFiles();
           } else {
-              $this->debug("Cleanup: unlinking temporary files");
               $this->unlinkFiles();
           }
     }
@@ -162,9 +156,6 @@ class UploadExtras extends Upload {
      */
     protected function shredFiles() {
         foreach($_FILES as $key => $file) {
-            $this->debug(sprintf("Deleting file: %s => %s",
-                                    $key,
-                                    $file['tmp_name']));
             if($file['error']===UPLOAD_ERR_OK &&
                 is_uploaded_file($file['tmp_name'])) {
                 $cmd = sprintf("export LANG=C; shred -u %s ",
@@ -172,7 +163,6 @@ class UploadExtras extends Upload {
                 $process = new \OMV\System\Process($cmd);
                 $process->execute($output,$result);
                  if ($result !== 0) {
-                    $this->debug($output);
                     // fall back to PHP deletion
                     if(file_exists($file['tmp_name']))
                         unlink($file['tmp_name']);
@@ -187,9 +177,6 @@ class UploadExtras extends Upload {
      */
     protected function unlinkFiles() {
         foreach($_FILES as $key => $file) {
-            $this->debug(sprintf("Deleting file: %s => %s",
-                                    $key,
-                                    $this->params['params'][$key]));
             if(array_key_exists($key, $this->params['params'])) {
                 if(file_exists($this->params['params'][$key]))
                     unlink($this->params['params'][$key]);

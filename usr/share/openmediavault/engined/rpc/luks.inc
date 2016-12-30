@@ -233,9 +233,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                 $key = $params['passphrase'];
                 $keyIsFile = FALSE;
             }
-            if ($luks->open($key, $keyIsFile) === FALSE) {
+            try {
+                $luks->open($key, $keyIsFile);
+            } catch(Exception $e) {
                 throw new \OMV\Exception(sprintf(gettext("Unable to unlock encrypted device: %s"),
-                    $luks->getLastError()));
+                    $e->getMessage()));
             }
         }
         /* Downstream operations with the decrypted container */
@@ -395,9 +397,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         }
         // Check if the container is open, and proceed to close it if so
         if (TRUE === $luks->isOpen()) {
-            if (FALSE === $luks->close()) {
+            try {
+                $luks->close();
+            } catch(Exception $e) {
                 throw new \OMV\Exception(sprintf(gettext("Unable to lock encrypted device: %s"),
-                    $luks->getLastError()));
+                    $e->getMessage()));
             }
         }
     }
@@ -469,10 +473,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             $key = $params['passphrase'];
             $keyIsFile = FALSE;
         }
-        if ($luks->create($key, $keyIsFile) === FALSE) {
-            throw new \OMV\Exception(sprintf(
-                gettext("Unable to create the encrypted device: %s"),
-                $luks->getLastError()));
+        try {
+            $luks->create($key, $keyIsFile);
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to create encrypted device: %s"),
+                $e->getMessage()));
         }
         // Notify configuration changes.
         $dispatcher = \OMV\Engine\Notify\Dispatcher::getInstance();
@@ -503,10 +508,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                         $params['devicefile']));
         }
         // Remove the container.
-        if (!$luks->remove()) {
-            throw new \OMV\Exception(sprintf(
-                gettext("Unable to remove the encrypted device: %s"),
-                $luks->getLastError()));
+        try {
+            $luks->remove();
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to remove encrypted device: %s"),
+                $e->getMessage()));
         }
         // Notify configuration changes.
         $dispatcher = \OMV\Engine\Notify\Dispatcher::getInstance();
@@ -596,10 +602,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             $newIsKeyFile = FALSE;
         }
         // Add the key
-        if (FALSE === $luks->addKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
-            throw new \OMV\Exception(
-                sprintf(gettext("Unable to add the key to the encrypted device: %s"),
-                        $luks->getLastError()));
+        try {
+            $luks->addKey($old, $new, $oldIsKeyFile, $newIsKeyFile);
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to add the key to the encrypted device: %s"),
+                $e->getMessage()));
         }
     }
 
@@ -645,11 +652,12 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             $new = $params['newpassphrase'];
             $newIsKeyFile = FALSE;
         }
-        // Add the key
-        if (FALSE === $luks->changeKey($old, $new, $oldIsKeyFile, $newIsKeyFile)) {
-            throw new \OMV\Exception(
-                sprintf(gettext("Unable to change the key on the encrypted device: %s"),
-                        $luks->getLastError()));
+        // Change the key
+        try {
+            $luks->changeKey($old, $new, $oldIsKeyFile, $newIsKeyFile);
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to change the key on the encrypted device: %s"),
+                $e->getMessage()));
         }
     }
 
@@ -686,10 +694,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             $key = $params['passphrase'];
             $keyIsFile = FALSE;
         }
-        if ($luks->removeKey($key, $keyIsFile) === FALSE) {
-            throw new \OMV\Exception(
-                sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
-                        $luks->getLastError()));
+        try {
+            $luks->removeKey($key, $keyIsFile);
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to remove the key from the encrypted device: %s"),
+                $e->getMessage()));
         }
     }
 
@@ -756,10 +765,11 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                         $params['devicefile']));
         }
         // Kill the key slot.
-        if (!$luks->killSlot($params['keyslot'])) {
-            throw new \OMV\Exception(sprintf(
-                gettext("Unable to erase the key slot on the encrypted device: %s"),
-                $luks->getLastError()));
+        try {
+            $luks->killSlot($params['keyslot']);
+        } catch(Exception $e) {
+            throw new \OMV\Exception(sprintf(gettext("Unable to erase the key slot on the encrypted device: %s"),
+                $e->getMessage()));
         }
     }
 
@@ -790,11 +800,12 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Extract the header to a temporary location and modify the
         // file mode/owner to allow the WebGUI PHP backend to unlink it.
         $tmpFilePath = sys_get_temp_dir()."/".uniqid("luksHeader");
-        if (!$luks->backupHeader($tmpFilePath)) {
+        try {
+            $luks->backupHeader($tmpFilePath);
+        } catch(Exception $e) {
             throw new \OMV\Exception(sprintf(
-                gettext("Unable to extract the LUKS header from ".
-                        "the encrypted device: %s"),
-                $luks->getLastError()));
+                gettext("Unable to extract the LUKS header from the encrypted device: %s"),
+                $e->getMessage()));
         }
         // Adjust header backup temporary file permissions and ownership so
         // that the WebGUI can delete it after downloading.
@@ -883,12 +894,12 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         }
         // Write the header to the device
         $luks = new \OMV\System\Storage\Luks\Container($params['devicefile']);
-        if (!$luks->restoreHeader($params['filepath'])) {
+        try {
+            $luks->restoreHeader($params['filepath']);
+        } catch(Exception $e) {
             throw new \OMV\Exception(sprintf(
-                gettext("Unable to restore the LUKS header to ".
-                        "device %s: %s"),
-                $params['devicefile'],
-                $luks->getLastError()));
+                gettext("Unable to restore the LUKS header to device: %s"),
+                $e->getMessage()));
         }
     }
 }
