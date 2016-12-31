@@ -852,12 +852,13 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
         // Validate the parameters of the RPC service method.
         $this->validateMethodParams($params, "rpc.luks.containerheader");
         // Get the storage device object.
-        $sd = \OMV\System\Storage\StorageDevice::get($params['devicefile']);
+        $sd = \OMV\System\Storage\StorageDevice::getStorageDevice($params['devicefile']);
         if (is_null($sd) || !$sd->exists()) {
             throw new \OMV\Exception($params['devicefile']);
         }
         // Get the storage device backend of the given device.
-        $sdb = \OMV\System\Storage\Backend\Manager::getBackend($sd->getDeviceFile());
+        $mngr = \OMV\System\Storage\Backend\Manager::getInstance();
+        $sdb = $mngr->getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
             throw new \OMV\Exception(sprintf(
                 gettext("No storage device backend exists for device %s"),
