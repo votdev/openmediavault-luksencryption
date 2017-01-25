@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-14 09:04+0000\n"
+"PO-Revision-Date: 2015-12-10 06:57+0000\n"
 "Last-Translator: Raul Fernandez Garcia <raulfg3@gmail.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es/)\n"
 "MIME-Version: 1.0\n"
@@ -40,7 +40,7 @@ msgid "Change passphrase"
 msgstr "Cambiar contraseña"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Elija una ranura para borrar ..."
 
 msgid "Confirm passphrase"
 msgstr "Confirmar contraseña"
@@ -82,7 +82,7 @@ msgstr "¿Realmente desea cifrar este disco? Todos los datos existentes en el , 
 msgid ""
 "Do you really want to kill this key slot? Ensure that you have another key "
 "which will unlock the device."
-msgstr ""
+msgstr "¿Realmente desea borrar esta ranura?. Asegurese de tener una llave válida para poder desbloquear el dispositivo.."
 
 msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
@@ -92,7 +92,7 @@ msgstr "¿Realmente desea eliminar esta contraseña?, Asegurese de que existe ot
 msgid ""
 "Do you really want to write the header to the device?<br/>Replacing the "
 "header will destroy existing key slots."
-msgstr ""
+msgstr "¿Realmente desea sobreescribir la cabecera del disco?. <br/>Remplazar la cabecera destruirá todas las ranuras para llaves."
 
 msgid "Encrypted Devices"
 msgstr "Discos Cifrados"
@@ -133,7 +133,7 @@ msgid "Failed to get list of encrypted devices"
 msgstr "Error al conseguir la lista de discos cifrados"
 
 msgid "Failed to kill the key slot on the encrypted device: %s"
-msgstr ""
+msgstr "Error al borrar la ranura seleccionada en el disco encriptado: %s"
 
 msgid "Failed to remove the encrypted device: %s"
 msgstr "Error al borrar el disco cifrado: %s"
@@ -151,22 +151,22 @@ msgid "Header file"
 msgstr "Archivo con las cabeceras"
 
 msgid "Key slot"
-msgstr ""
+msgstr "Ranura para llave"
 
 msgid "Key slots in use"
-msgstr ""
+msgstr "Ranuras en uso"
 
 msgid "Keys"
 msgstr "Contraseñas"
 
 msgid "Kill"
-msgstr ""
+msgstr "Borrar"
 
 msgid "Kill key slot"
-msgstr ""
+msgstr "Borrar ranura"
 
 msgid "Kill slot"
-msgstr ""
+msgstr "Borrar ranura"
 
 msgid "LUKS container on '%s' not found"
 msgstr "Contenedor LUKS en '%s' no encontrado"
@@ -234,7 +234,7 @@ msgid "Size"
 msgstr "Tamaño"
 
 msgid "Success"
-msgstr ""
+msgstr "Hecho"
 
 msgid "Test"
 msgstr "Test"
@@ -248,13 +248,13 @@ msgstr "UUID de la cabecera de backup LUKS"
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
 "find out which slot you want to destroy."
-msgstr ""
+msgstr "Ranura para borrar. Use la \"Frase de Test\" o \"Detalle\" para averiguar que ranura en concreto desea borrar."
 
 msgid "The passphrase did not unlock any key slot on the device"
-msgstr ""
+msgstr "La frase no desbloquea ninguna ranura en este disco."
 
 msgid "The passphrase successfully unlocked key slot "
-msgstr ""
+msgstr "La frase ha desbloqueado con exito una ranura"
 
 msgid "UUID"
 msgstr "UUID"

@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Pavel Borecki <pavel.borecki@gmail.com>, 2015
+# Pavel Borecki <pavel.borecki@gmail.com>, 2015-2016
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-20 09:41+0000\n"
+"PO-Revision-Date: 2016-10-05 21:10+0000\n"
 "Last-Translator: Pavel Borecki <pavel.borecki@gmail.com>\n"
 "Language-Team: Czech (Czech Republic) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/cs_CZ/)\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +28,7 @@ msgid "Add passphrase"
 msgstr "Přidat heslovou frázi"
 
 msgid "Backup header"
-msgstr "Záložní hlavička"
+msgstr "Zazálohovat hlavičku"
 
 msgid "Cancel"
 msgstr "Storno"
@@ -61,7 +61,7 @@ msgid "Decrypted device"
 msgstr "Rozšifrované zařízení"
 
 msgid "Delete encrypted device"
-msgstr "Smazat šifrované zařízení"
+msgstr "Odstranit šifrované zařízení"
 
 msgid "Detail"
 msgstr "Podrobnosti"
@@ -98,7 +98,7 @@ msgid "Encrypted Devices"
 msgstr "Šifrovaná zařízení"
 
 msgid "Encrypted device details"
-msgstr "Podprobnosti o šifrovaném zařízení"
+msgstr "Podrobnosti o šifrovaném zařízení"
 
 msgid "Encryption"
 msgstr "Šifrování"
@@ -169,7 +169,7 @@ msgid "Kill slot"
 msgstr "Odebrat pozici"
 
 msgid "LUKS container on '%s' not found"
-msgstr "Na %s nebyl nalezen LUKS kontejner"
+msgstr "Na „%s“ nebyl nalezen LUKS kontejner"
 
 msgid "LUKS encrypted device %s [%s, %s]"
 msgstr "LUKS šifrované zařízení %s [%s, %s]"
@@ -248,7 +248,7 @@ msgstr "Univerzálně jedinečný identifikátor souboru se zálohou LUKS hlavi�
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
 "find out which slot you want to destroy."
-msgstr "Pozice klíče, kterou odstranit. Příslušnou pozici zjistíte funkcemi Vyzkoušet heslovou frázi nebo Podrobnosti."
+msgstr "Pozice klíče, kterou odstranit. Příslušnou pozici zjistíte funkcemi „Vyzkoušet heslovou frázi“ nebo „Podrobnosti“."
 
 msgid "The passphrase did not unlock any key slot on the device"
 msgstr "Zadaná heslová fráze neodemkla žádnou z pozic klíče na zařízení"

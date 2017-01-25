@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Paolo Velati <paolo.velati@gmail.com>, 2016
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-12 19:04+0000\n"
-"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"PO-Revision-Date: 2016-09-07 12:35+0000\n"
+"Last-Translator: Paolo Velati <paolo.velati@gmail.com>\n"
 "Language-Team: Italian (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/it/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -21,7 +22,7 @@ msgid "%s is not a valid LUKS header backup file"
 msgstr ""
 
 msgid "Add"
-msgstr ""
+msgstr "Aggiungi"
 
 msgid "Add passphrase"
 msgstr ""
@@ -30,10 +31,10 @@ msgid "Backup header"
 msgstr ""
 
 msgid "Cancel"
-msgstr ""
+msgstr "Cancella"
 
 msgid "Change"
-msgstr ""
+msgstr "Cambia"
 
 msgid "Change passphrase"
 msgstr ""
@@ -45,10 +46,10 @@ msgid "Confirm passphrase"
 msgstr ""
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Conferma"
 
 msgid "Create"
-msgstr ""
+msgstr "Crea"
 
 msgid "Create encrypted device"
 msgstr ""
@@ -63,10 +64,10 @@ msgid "Delete encrypted device"
 msgstr ""
 
 msgid "Detail"
-msgstr ""
+msgstr "Dettagli"
 
 msgid "Device"
-msgstr ""
+msgstr "Dispositivo"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
@@ -94,13 +95,13 @@ msgid ""
 msgstr ""
 
 msgid "Encrypted Devices"
-msgstr ""
+msgstr "Dispositivi cifrati"
 
 msgid "Encrypted device details"
 msgstr ""
 
 msgid "Encryption"
-msgstr ""
+msgstr "Crittografia"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
 msgstr ""
@@ -144,7 +145,7 @@ msgid "Failed to restore the LUKS header to "
 msgstr ""
 
 msgid "Force"
-msgstr ""
+msgstr "Forza"
 
 msgid "Header file"
 msgstr ""
@@ -156,10 +157,10 @@ msgid "Key slots in use"
 msgstr ""
 
 msgid "Keys"
-msgstr ""
+msgstr "Chiavi"
 
 msgid "Kill"
-msgstr ""
+msgstr "Uccidi"
 
 msgid "Kill key slot"
 msgstr ""
@@ -174,7 +175,7 @@ msgid "LUKS encrypted device %s [%s, %s]"
 msgstr ""
 
 msgid "Lock"
-msgstr ""
+msgstr "Blocca"
 
 msgid "Locking device ..."
 msgstr ""
@@ -186,7 +187,7 @@ msgid "New passphrase to replace the existing one (above)"
 msgstr ""
 
 msgid "No"
-msgstr ""
+msgstr "No"
 
 msgid "No encryption found on '%s'"
 msgstr ""
@@ -195,7 +196,7 @@ msgid "No storage device backend exists for device %s"
 msgstr ""
 
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
@@ -209,13 +210,13 @@ msgid "Passphrases don't match"
 msgstr ""
 
 msgid "Recovery"
-msgstr ""
+msgstr "Recupero"
 
 msgid "Referenced"
 msgstr ""
 
 msgid "Remove"
-msgstr ""
+msgstr "Rimuovi"
 
 msgid "Remove passphrase"
 msgstr ""
@@ -230,13 +231,13 @@ msgid "Select a device ..."
 msgstr ""
 
 msgid "Size"
-msgstr ""
+msgstr "Dimensione"
 
 msgid "Success"
-msgstr ""
+msgstr "Successo"
 
 msgid "Test"
-msgstr ""
+msgstr "Testa"
 
 msgid "Test passphrase"
 msgstr ""
@@ -256,7 +257,7 @@ msgid "The passphrase successfully unlocked key slot "
 msgstr ""
 
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
 msgstr ""
@@ -265,13 +266,13 @@ msgid "Unable to unlock encrypted device: %s"
 msgstr ""
 
 msgid "Unlock"
-msgstr ""
+msgstr "Sblocca"
 
 msgid "Unlock encrypted device"
 msgstr ""
 
 msgid "Unlocked"
-msgstr ""
+msgstr "Sbloccato"
 
 msgid "Unlocking ..."
 msgstr ""
@@ -283,7 +284,7 @@ msgid "Uploading header backup file ..."
 msgstr ""
 
 msgid "Yes"
-msgstr ""
+msgstr "Sì"
 
 msgid "n/a"
-msgstr ""
+msgstr "n/d"

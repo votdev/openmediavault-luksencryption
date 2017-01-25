@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Toshihiro Kan <kansuke4649@gmail.com>, 2015
+# Toshihiro Kan <kansuke4649@gmail.com>, 2015-2016
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-27 05:53+0000\n"
+"PO-Revision-Date: 2016-02-18 00:29+0000\n"
 "Last-Translator: Toshihiro Kan <kansuke4649@gmail.com>\n"
 "Language-Team: Japanese (Japan) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/ja_JP/)\n"
 "MIME-Version: 1.0\n"
@@ -72,27 +72,27 @@ msgstr "デバイス"
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
 "will be destroyed and all data will be lost."
-msgstr ""
+msgstr "本当に暗号化されたデバイスを削除しますか？<br/>暗号化キーは破棄され、すべてのデータが失われます。"
 
 msgid ""
 "Do you really want to encrypt this device? Any existing data on it will be "
 "deleted."
-msgstr ""
+msgstr "本当にこのデバイスを暗号化しますか？既存のデータは削除されます。"
 
 msgid ""
 "Do you really want to kill this key slot? Ensure that you have another key "
 "which will unlock the device."
-msgstr ""
+msgstr "本当にキースロットを削除しますか？デバイスをアンロックするための他のキーを持っていることを確認してください。"
 
 msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
 "passphrase which will unlock the device."
-msgstr ""
+msgstr "本当にこのパスフレーズを削除しますか？デバイスのロックを解除する別のパスフレーズを持っていることを確認してください。"
 
 msgid ""
 "Do you really want to write the header to the device?<br/>Replacing the "
 "header will destroy existing key slots."
-msgstr ""
+msgstr "本当にデバイスにヘッダを書き込みますか？<br/>ヘッダを書き換えると既存のキースロットは破棄されます。"
 
 msgid "Encrypted Devices"
 msgstr "暗号化済みデバイス"
@@ -104,45 +104,45 @@ msgid "Encryption"
 msgstr "暗号化"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
-msgstr ""
+msgstr "デバイスのロックを解除するための既存の有効なパスフレーズを入力してください。"
 
 msgid "Enter an existing, valid passphrase which you want to change."
-msgstr ""
+msgstr "変更する既存の有効なパスフレーズを入力してください。"
 
 msgid ""
 "Enter an existing, valid passphrase which you want to remove from the "
 "encrypted device."
-msgstr ""
+msgstr "暗号化されたデバイスから削除するための既存の有効なパスフレーズを入力してください。"
 
 msgid "Failed to add the passphrase to the encrypted device: %s"
-msgstr ""
+msgstr "暗号化されたデバイスにパスフレーズを追加できませんでした: %s"
 
 msgid "Failed to change the passphrase for the encrypted device: %s"
-msgstr ""
+msgstr "暗号化されたデバイスのパスフレーズの変更に失敗しました: %s"
 
 msgid "Failed to create encrypted device: %s"
-msgstr ""
+msgstr "暗号化デバイスの作成に失敗しました: %s"
 
 msgid "Failed to extract the LUKS header from "
-msgstr ""
+msgstr "LUKSヘッダーの抽出に失敗しました"
 
 msgid "Failed to get list of devices"
-msgstr ""
+msgstr "デバイスのリスト取得に失敗しました"
 
 msgid "Failed to get list of encrypted devices"
-msgstr ""
+msgstr "暗号化済みデバイスのリスト取得に失敗しました"
 
 msgid "Failed to kill the key slot on the encrypted device: %s"
-msgstr ""
+msgstr "暗号化済みデバイス上のキースロットを削除できませんでした: %s"
 
 msgid "Failed to remove the encrypted device: %s"
-msgstr ""
+msgstr "暗号化済みデバイスの削除に失敗しました: %s"
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
-msgstr ""
+msgstr "暗号化済みデバイスからパスフレーズを削除できませんでした: %s"
 
 msgid "Failed to restore the LUKS header to "
-msgstr ""
+msgstr "LUKSヘッダの復元に失敗しました"
 
 msgid "Force"
 msgstr "フォース"
@@ -169,10 +169,10 @@ msgid "Kill slot"
 msgstr "スロットの削除"
 
 msgid "LUKS container on '%s' not found"
-msgstr ""
+msgstr "'%s' 上に LUKSコンテナは見つかりませんでした"
 
 msgid "LUKS encrypted device %s [%s, %s]"
-msgstr ""
+msgstr "LUKS 暗号化済みデバイス %s [%s, %s]"
 
 msgid "Lock"
 msgstr "ロック"
@@ -181,19 +181,19 @@ msgid "Locking device ..."
 msgstr "デバイスをロックしています ..."
 
 msgid "New passphrase to add to the encrypted device"
-msgstr ""
+msgstr "新しいパスフレーズを暗号化されたデバイスに追加します"
 
 msgid "New passphrase to replace the existing one (above)"
-msgstr ""
+msgstr "新しいパスフレーズは、既存のもの(上記の)を置き換えます"
 
 msgid "No"
 msgstr "いいえ"
 
 msgid "No encryption found on '%s'"
-msgstr ""
+msgstr "'%s' には暗号化されたものがありません"
 
 msgid "No storage device backend exists for device %s"
-msgstr ""
+msgstr "デバイス %s のためのストレージデバイスバックエンドは存在しません"
 
 msgid "OK"
 msgstr "OK"
@@ -201,7 +201,7 @@ msgstr "OK"
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
 "device."
-msgstr ""
+msgstr "バックアップからのUUIDがデバイスと一致しない場合でも、ヘッダーを上書きします。"
 
 msgid "Passphrase"
 msgstr "パスフレーズ"
@@ -216,13 +216,13 @@ msgid "Referenced"
 msgstr "参考"
 
 msgid "Remove"
-msgstr "リムーブ"
+msgstr "削除"
 
 msgid "Remove passphrase"
-msgstr ""
+msgstr "パスフレーズの削除"
 
 msgid "Restore encrypted device header"
-msgstr ""
+msgstr "暗号化済みデバイスヘッダーのリストア"
 
 msgid "Restore header"
 msgstr "リストアヘッダ"
@@ -240,36 +240,36 @@ msgid "Test"
 msgstr "テスト"
 
 msgid "Test passphrase"
-msgstr ""
+msgstr "パスフレーズのテスト"
 
 msgid "The UUID of the LUKS header backup file "
-msgstr ""
+msgstr "LUKSヘッダーバックアップファイルのUUID"
 
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
 "find out which slot you want to destroy."
-msgstr ""
+msgstr "キースロットを削除します。削除するスロットを検索するために’パスフレーズのテスト'または'詳細'機能を使用します。"
 
 msgid "The passphrase did not unlock any key slot on the device"
-msgstr ""
+msgstr "このパスフレーズではデバイス上の任意のキースロットのロックを解除できません"
 
 msgid "The passphrase successfully unlocked key slot "
-msgstr ""
+msgstr "パスフレーズが成功し、キースロットをアンロックしました"
 
 msgid "UUID"
 msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
-msgstr ""
+msgstr "暗号化済みデバイスをロックすることができません: %s"
 
 msgid "Unable to unlock encrypted device: %s"
-msgstr ""
+msgstr "暗号化済みデバイスをアンロックすることができません: %s"
 
 msgid "Unlock"
 msgstr "アンロック"
 
 msgid "Unlock encrypted device"
-msgstr ""
+msgstr "暗号化済みデバイスのアンロック"
 
 msgid "Unlocked"
 msgstr "アンロック済"
@@ -278,10 +278,10 @@ msgid "Unlocking ..."
 msgstr "アンロックしています ..."
 
 msgid "Upload header backup file"
-msgstr ""
+msgstr "ヘッダーバックアップファイルのアップロード"
 
 msgid "Uploading header backup file ..."
-msgstr ""
+msgstr "ヘッダーバックアップファイルをアップロードしています ..."
 
 msgid "Yes"
 msgstr "はい"

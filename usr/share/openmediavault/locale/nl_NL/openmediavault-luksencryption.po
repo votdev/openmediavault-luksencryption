@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# okpail <okpail@gmail.com>, 2016
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-12 19:04+0000\n"
-"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"PO-Revision-Date: 2016-03-04 17:11+0000\n"
+"Last-Translator: okpail <okpail@gmail.com>\n"
 "Language-Team: Dutch (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/nl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -18,55 +19,55 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr ""
+msgstr "%s is geen geen LUKS header backup file"
 
 msgid "Add"
-msgstr ""
+msgstr "Voeg toe"
 
 msgid "Add passphrase"
-msgstr ""
+msgstr "Voeg paswoord toe"
 
 msgid "Backup header"
-msgstr ""
+msgstr "Backup header"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Cancel"
 
 msgid "Change"
-msgstr ""
+msgstr "Verander"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "Verander paswoord"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Kies een slot om te 'doden'..."
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "Bevestig paswoord"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Bevestiging"
 
 msgid "Create"
-msgstr ""
+msgstr "Creëer"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "Creëer een versleuteld device"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "Bestaand paswoord"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "Gedecrypt device"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "Wis het versleuteld device"
 
 msgid "Detail"
-msgstr ""
+msgstr "Detail"
 
 msgid "Device"
-msgstr ""
+msgstr "Device"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
@@ -94,13 +95,13 @@ msgid ""
 msgstr ""
 
 msgid "Encrypted Devices"
-msgstr ""
+msgstr "Versleutelde Devices"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "Details van Versleultede device"
 
 msgid "Encryption"
-msgstr ""
+msgstr "Encryptie"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
 msgstr ""
@@ -144,28 +145,28 @@ msgid "Failed to restore the LUKS header to "
 msgstr ""
 
 msgid "Force"
-msgstr ""
+msgstr "Forceer"
 
 msgid "Header file"
-msgstr ""
+msgstr "Header file"
 
 msgid "Key slot"
-msgstr ""
+msgstr "Sleutel slot"
 
 msgid "Key slots in use"
 msgstr ""
 
 msgid "Keys"
-msgstr ""
+msgstr "Sleutels"
 
 msgid "Kill"
-msgstr ""
+msgstr "Stop"
 
 msgid "Kill key slot"
 msgstr ""
 
 msgid "Kill slot"
-msgstr ""
+msgstr "Stop het slot"
 
 msgid "LUKS container on '%s' not found"
 msgstr ""
@@ -174,10 +175,10 @@ msgid "LUKS encrypted device %s [%s, %s]"
 msgstr ""
 
 msgid "Lock"
-msgstr ""
+msgstr "Lock"
 
 msgid "Locking device ..."
-msgstr ""
+msgstr "Locking device..."
 
 msgid "New passphrase to add to the encrypted device"
 msgstr ""
@@ -186,7 +187,7 @@ msgid "New passphrase to replace the existing one (above)"
 msgstr ""
 
 msgid "No"
-msgstr ""
+msgstr "Nee"
 
 msgid "No encryption found on '%s'"
 msgstr ""
@@ -195,7 +196,7 @@ msgid "No storage device backend exists for device %s"
 msgstr ""
 
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
@@ -203,43 +204,43 @@ msgid ""
 msgstr ""
 
 msgid "Passphrase"
-msgstr ""
+msgstr "Paswoord"
 
 msgid "Passphrases don't match"
 msgstr ""
 
 msgid "Recovery"
-msgstr ""
+msgstr "Herstellen"
 
 msgid "Referenced"
-msgstr ""
+msgstr "Gerefereerd"
 
 msgid "Remove"
-msgstr ""
+msgstr "Verwijder"
 
 msgid "Remove passphrase"
-msgstr ""
+msgstr "Verwijder paswoord"
 
 msgid "Restore encrypted device header"
 msgstr ""
 
 msgid "Restore header"
-msgstr ""
+msgstr "Restore header"
 
 msgid "Select a device ..."
-msgstr ""
+msgstr "Selecteer een device ..."
 
 msgid "Size"
-msgstr ""
+msgstr "Grootte"
 
 msgid "Success"
-msgstr ""
+msgstr "Succes "
 
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 msgid "Test passphrase"
-msgstr ""
+msgstr "Test paswoord"
 
 msgid "The UUID of the LUKS header backup file "
 msgstr ""
@@ -256,7 +257,7 @@ msgid "The passphrase successfully unlocked key slot "
 msgstr ""
 
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
 msgstr ""
@@ -265,25 +266,25 @@ msgid "Unable to unlock encrypted device: %s"
 msgstr ""
 
 msgid "Unlock"
-msgstr ""
+msgstr "Vrijgeven"
 
 msgid "Unlock encrypted device"
-msgstr ""
+msgstr "Ontsleutel versleuteld device"
 
 msgid "Unlocked"
-msgstr ""
+msgstr "Ontsleutelen"
 
 msgid "Unlocking ..."
-msgstr ""
+msgstr "Ontsleutelen..."
 
 msgid "Upload header backup file"
-msgstr ""
+msgstr "Upload header backup file"
 
 msgid "Uploading header backup file ..."
-msgstr ""
+msgstr "Laden header backup file ..."
 
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 msgid "n/a"
-msgstr ""
+msgstr "niet aanwezig"
