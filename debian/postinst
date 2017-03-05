@@ -7,12 +7,17 @@ set -e
 
 case "$1" in
     configure)
+        XPATH="/config/system/notification/notifications"
+
+        if ! omv_config_exists "${XPATH}/notification[id='luks']"; then
+            object="<uuid>$(omv_uuid)</uuid>"
+            object="${object}<id>luks</id>"
+            object="${object}<enable>0</enable>"
+            omv_config_add_node_data "${XPATH}" "notification" "${object}"
+        fi
+
         # Activate package triggers. These triggers are only set during the
         # package installation.
-	object="<uuid>$(omv_uuid)</uuid>"
-	object="${object}<id>luks</id>"
-	object="${object}<enable>0</enable>"
-	omv_config_add_node_data "/config/system/notification/notifications" "notification" "${object}"
         dpkg-trigger update-fixperms
         dpkg-trigger update-locale
 

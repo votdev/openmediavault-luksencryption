@@ -4,7 +4,7 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2017 OpenMediaVault Plugin Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,8 +46,8 @@ class Container extends \OMV\System\Storage\StorageDevice {
     protected $usedKeySlots = 0;
     protected $freeKeySlots = 8;
 
-    protected $deviceMapperDeviceFile   = "";
-    protected $deviceMapperName         = "";
+    protected $deviceMapperDeviceFile = "";
+    protected $deviceMapperName       = "";
 
     private $dataCached = FALSE;
 
@@ -60,7 +60,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
         // of the device.
         $path = sprintf("/sys/class/block/%s/dm/name",
                         $this->getDeviceMapperCanonicalName());
-        if(!file_exists($path))
+        if (!file_exists($path))
             return FALSE;
         return trim(file_get_contents($path));
     }
@@ -74,7 +74,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
         // of the device.
         $path = sprintf("/sys/class/block/%s/dm/uuid",
                         $this->getDeviceMapperCanonicalName());
-        if(!file_exists($path))
+        if (!file_exists($path))
             return FALSE;
         return trim(file_get_contents($path));
     }
@@ -84,9 +84,9 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return A device file string (/dev/dm-0), otherwise FALSE.
      */
     public function getDeviceMapperDeviceFile() {
-        if(FALSE === ($holders = $this->getHolders()))
+        if (FALSE === ($holders = $this->getHolders()))
             return FALSE;
-        if(count($holders)!=1)
+        if (count($holders)!=1)
             return FALSE;
         return $holders[0]; // Should only be one holder, just return the first
     }
@@ -97,7 +97,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      */
     public function getDeviceMapperCanonicalName() {
         // Get the device file and extract the name, e.g. /dev/sda => sda.
-        if(FALSE === ($dev = $this->getDeviceMapperDeviceFile())) {
+        if (FALSE === ($dev = $this->getDeviceMapperDeviceFile())) {
             return FALSE;
         }
         $deviceName = str_replace("/dev/", "", $dev);
@@ -110,26 +110,29 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     private function getData() {
-        if($this->dataCached !== FALSE)
+        if ($this->dataCached !== FALSE)
             return TRUE;
 
         // Reset cached data
-        $this->uuid                     = "";
-        $this->isOpen                   = FALSE;
-        $this->headerInfo               = "";
-        $this->usedKeySlots             = 0;
-        $this->freeKeySlots             = 8;
-        $this->deviceMapperDeviceFile   = "";
-        $this->deviceMapperName         = "";
+        $this->uuid                   = "";
+        $this->isOpen                 = FALSE;
+        $this->headerInfo             = "";
+        $this->usedKeySlots           = 0;
+        $this->freeKeySlots           = 8;
+        $this->deviceMapperDeviceFile = "";
+        $this->deviceMapperName       = "";
 
         // Look up the UUID for the LUKS container
-        $cmd = sprintf("export LANG=C; cryptsetup luksUUID %s",
-                        $this->getDeviceFile());
+        $cmd = sprintf("cryptsetup luksUUID %s", $this->getDeviceFile());
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setQuiet();
+        $process->execute($output, $exitStatus);
+        if ($exitStatus !== 0)
+            return FALSE;
+
         $uuid = trim($output[0]);
         $this->uuid = $uuid;
-        unset($cmd, $output, $result);
+        unset($cmd, $output, $exitStatus);
 
         // Get size of device
         $this->size = $this->getSize();
@@ -140,8 +143,8 @@ class Container extends \OMV\System\Storage\StorageDevice {
             // should never be used. Because of that the device file returned
             // should look like /dev/mapper/<xyz>. See for more information:
             // https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html-single/DM_Multipath
-            if(1 == preg_match("/^\/dev\/dm-\d+$/", $dev)) {
-                if(FALSE !== ($name = $this->getDeviceMapperName())) {
+            if (1 == preg_match("/^\/dev\/dm-\d+$/", $dev)) {
+                if (FALSE !== ($name = $this->getDeviceMapperName())) {
                     $this->deviceMapperDeviceFile = sprintf("/dev/mapper/%s",
                                                             $name);
                     $this->deviceMapperName = $name;
@@ -153,16 +156,14 @@ class Container extends \OMV\System\Storage\StorageDevice {
         }
 
         // Collect the detailed output from luksDump
-        $cmd = sprintf("export LANG=C; cryptsetup luksDump %s",
-                        $this->getDeviceFile());
+        $cmd = sprintf("cryptsetup luksDump %s", $this->getDeviceFile());
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->execute($output, $exitStatus);
         $this->headerInfo = $output;
         $this->usedKeySlots = count(preg_grep("/^Key Slot \d: ENABLED$/",
                                                 $this->headerInfo));
         $this->freeKeySlots = count(preg_grep("/^Key Slot \d: DISABLED$/",
                                                 $this->headerInfo));
-        unset($cmd, $output, $result);
 
         // Set flag to mark information has been successfully read.
         $this->dataCached = TRUE;
@@ -176,7 +177,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      */
     public function refresh() {
         $this->dataCached = FALSE;
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return TRUE;
     }
@@ -207,12 +208,11 @@ class Container extends \OMV\System\Storage\StorageDevice {
         // TODO: would it be better (quicker) to check the UUID
         // in, e.g., /sys/class/block/dm-0/dm/uuid (it begins
         // with 'CRYPTO' for LUKS/dm-crypt devices)?
-        $cmd = sprintf("export LANG=C; cryptsetup isLuks %s",
-                        escapeshellarg($deviceFile));
+        $cmd = sprintf("cryptsetup isLuks %s", escapeshellarg($deviceFile));
         $process = new Process($cmd);
         $process->setQuiet();
-        $process->execute($output,$result);
-        if (0 !== $result)
+        $process->execute($output, $exitStatus);
+        if (0 !== $exitStatus)
             return FALSE;
         return TRUE;
     }
@@ -225,13 +225,14 @@ class Container extends \OMV\System\Storage\StorageDevice {
     public function getHolders() {
         // Make sure the canonical device file is used to extract the name
         // of the device.
-        $path = sprintf("/sys/class/block/%s/holders", $this->getDeviceName(TRUE));
-        if(!file_exists($path))
+        $path = sprintf("/sys/class/block/%s/holders",
+            $this->getDeviceName(TRUE));
+        if (!file_exists($path))
             return FALSE;
-        $result = array();
+        $result = [];
         $dir = new \DirectoryIterator($path);
-        foreach($dir as $item) {
-            if($item->isDot() || !$item->isLink())
+        foreach ($dir as $item) {
+            if ($item->isDot() || !$item->isLink())
                 continue;
             $result[] = sprintf("/dev/%s", $item->getFilename());
         }
@@ -243,7 +244,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return Detailed information about the container, FALSE on failure.
      */
     public function getDetail() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return implode("\n", $this->headerInfo);
     }
@@ -253,7 +254,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return Number of used key slots, FALSE on failure.
      */
     public function getUsedKeySlots() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->usedKeySlots;
     }
@@ -263,7 +264,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return Number of free key slots, FALSE on failure.
      */
     public function getFreeKeySlots() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->freeKeySlots;
     }
@@ -273,7 +274,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return The UUID of the container, FALSE on failure.
      */
     public function getUuid() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->uuid;
     }
@@ -283,7 +284,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if the container is open, otherwise FALSE.
      */
     public function isOpen() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->isOpen;
     }
@@ -293,7 +294,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return The mapped devicefile of the container, FALSE on failure.
      */
     public function getDecryptedDeviceFile() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->deviceMapperDeviceFile;
     }
@@ -303,7 +304,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return The mapped device name of the container, FALSE on failure.
      */
     public function getDecryptedName() {
-        if($this->getData() === FALSE)
+        if ($this->getData() === FALSE)
             return FALSE;
         return $this->deviceMapperName;
     }
@@ -328,9 +329,9 @@ class Container extends \OMV\System\Storage\StorageDevice {
         if ($this->getData() === FALSE)
             return FALSE;
         return sprintf(gettext("LUKS encrypted device %s[%s, %s]"),
-                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
-                        $this->getDeviceFile(),
-                        binary_format($this->getSize()));
+            ($this->getModel()) ? '('.$this->getModel().') ' : '',
+            $this->getDeviceFile(),
+            binary_format($this->getSize()));
     }
 
     /**
@@ -344,21 +345,17 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     public function create($key, $keyIsFile=FALSE) {
-        switch($keyIsFile) {
-            case TRUE:
-                $cmd = sprintf("export LANG=C; cryptsetup luksFormat %s ".
-                            "--key-file %s 2>&1",
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($key));
-                break;
-            case FALSE:
-            default:
-                $cmd = sprintf("export LANG=C; echo -n %s | ".
-                            "cryptsetup luksFormat %s --key-file=- 2>&1",
-                            escapeshellarg($key),
-                            escapeshellarg($this->getDeviceFile()));
+        if (TRUE === $keyIsFile) {
+            $cmd = sprintf("cryptsetup luksFormat %s --key-file %s",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($key));
+        } else {
+            $cmd = sprintf("echo -n %s | cryptsetup luksFormat %s --key-file=-",
+                escapeshellarg($key),
+                escapeshellarg($this->getDeviceFile()));
         }
         $process = new Process($cmd);
+        $process->setRedirect2to1();
         $process->execute($output);
         $this->refresh();
         return TRUE;
@@ -376,56 +373,59 @@ class Container extends \OMV\System\Storage\StorageDevice {
             }
         }
         // Get the payload offset (header size)
-        $cmd = sprintf("export LANG=C; cryptsetup luksDump %s ".
-                        "| grep 'Payload offset' | awk '{print $3}'",
-                        escapeshellarg($this->getDeviceFile()));
+        $cmd = sprintf("cryptsetup luksDump %s ".
+            "| grep 'Payload offset' | awk '{print $3}'",
+            escapeshellarg($this->getDeviceFile()));
 
         $process = new Process($cmd);
         $process->setQuiet();
-        $process->execute($output,$result);
-        if (0 !== $result) {
+        $process->execute($output, $exitStatus);
+        if (0 !== $exitStatus) {
             $header_size = 4096;
         } else {
             $header_size = trim($output[0]);
         }
-        unset($cmd, $output, $result);
+        unset($cmd, $output, $exitStatus);
 
         // Get the storage device object.
-        $sd = \OMV\System\Storage\StorageDevice::getStorageDevice($this->getDeviceFile());
+        $sd = \OMV\System\Storage\StorageDevice::getStorageDevice(
+            $this->getDeviceFile());
         if (is_null($sd) || !$sd->exists()) {
-            throw new \OMV\Exception("No storage device for %s",$this->getDeviceFile());
+            throw new \OMV\Exception("No storage device for %s",
+                $this->getDeviceFile());
         }
         // Get the storage device backend of the given device.
         $mngr = \OMV\System\Storage\Backend\Manager::getInstance();
         $sdb = $mngr->getBackend($sd->getDeviceFile());
         if (is_null($sdb)) {
-            throw new \OMV\Exception("No storage backend for %s",$this->getDeviceFile());
+            throw new \OMV\Exception("No storage backend for %s",
+                $this->getDeviceFile());
         }
         switch ($sdb->getType()) {
-        case OMV_STORAGE_DEVICE_TYPE_SOFTWARERAID:
-        case OMV_STORAGE_DEVICE_TYPE_DEVICEMAPPER:
-            // Wipe existing filesystems.
-            $cmd = sprintf("export LANG=C; wipefs -a %s 2>&1",
-                            escapeshellarg($sd->getDeviceFile()));
-            $process = new Process($cmd);
-            $process->execute($output,$result);
-            break;
-        default:
-            // Wipe existing filesystems.
-            $cmd = sprintf("export LANG=C; sgdisk --zap-all %s 2>&1",
-                            escapeshellarg($sd->getDeviceFile()));
-            $process = new Process($cmd);
-            $process->execute($output,$result);
-            break;
+            case OMV_STORAGE_DEVICE_TYPE_SOFTWARERAID:
+            case OMV_STORAGE_DEVICE_TYPE_DEVICEMAPPER:
+                // Wipe existing filesystems.
+                $cmd = sprintf("wipefs -a %s",
+                    escapeshellarg($sd->getDeviceFile()));
+                break;
+            default:
+                // Wipe existing filesystems.
+                $cmd = sprintf("sgdisk --zap-all %s",
+                    escapeshellarg($sd->getDeviceFile()));
+                break;
         }
-        unset($cmd, $output, $result);
-        // Destroy the header by overwriting it
-        $cmd = sprintf("export LANG=C; dd if=/dev/urandom ".
-                        "of=%s bs=512 count=%s 2>&1",
-                        escapeshellarg($sd->getDeviceFile()),
-                        escapeshellarg($header_size));
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
+        unset($cmd, $output, $exitStatus);
+
+        // Destroy the header by overwriting it
+        $cmd = sprintf("dd if=/dev/urandom of=%s bs=512 count=%s",
+            escapeshellarg($sd->getDeviceFile()),
+            escapeshellarg($header_size));
+        $process = new Process($cmd);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -442,25 +442,22 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * TODO: change from using [dev]-crypt as the mapper name to the UUID of
      *       container instead (unique, probably will be needed for crypttab)
      */
-    public function open($key, $keyIsFile=FALSE) {
-        switch($keyIsFile) {
-            case TRUE:
-                $cmd = sprintf("export LANG=C; cryptsetup luksOpen %s ".
-                            "%s-crypt --key-file %s 2>&1",
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($this->generateDecryptedName()),
-                            escapeshellarg($key));
-                break;
-            case FALSE:
-            default:
-                $cmd = sprintf("export LANG=C; echo -n %s | ".
-                            "cryptsetup luksOpen %s %s-crypt --key-file=- 2>&1",
-                            escapeshellarg($key),
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($this->generateDecryptedName()));
+    public function open($key, $keyIsFile = FALSE) {
+        if (TRUE === $keyIsFile) {
+            $cmd = sprintf("cryptsetup luksOpen %s %s-crypt --key-file %s",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($this->generateDecryptedName()),
+                escapeshellarg($key));
+        } else {
+            $cmd = sprintf("echo -n %s | ".
+                "cryptsetup luksOpen %s %s-crypt --key-file=-",
+                escapeshellarg($key),
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($this->generateDecryptedName()));
         }
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -470,10 +467,11 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     public function close() {
-        $cmd = sprintf("export LANG=C; cryptsetup luksClose %s 2>&1",
-                        escapeshellarg($this->getDecryptedName()));
+        $cmd = sprintf("cryptsetup luksClose %s",
+            escapeshellarg($this->getDecryptedName()));
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -494,38 +492,30 @@ class Container extends \OMV\System\Storage\StorageDevice {
      */
     public function addKey($old,
                            $new,
-                           $oldIsFile=FALSE,
-                           $newIsFile=FALSE) {
+                           $oldIsFile = FALSE,
+                           $newIsFile = FALSE) {
         // Build command line
-        $cmd = "export LANG=C; ";
-        switch($oldIsFile) {
-            case TRUE:
-                $cmd .= sprintf("cryptsetup luksAddKey -q ".
-                            "%s --key-file %s ",
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($old));
-                break;
-            case FALSE:
-            default:
-                $cmd .= sprintf("echo -n %s | cryptsetup luksAddKey -q ".
-                            " %s --key-file=- ",
-                            escapeshellarg($old),
-                            escapeshellarg($this->getDeviceFile()));
+        if (TRUE === $oldIsFile) {
+            $cmd = sprintf("cryptsetup luksAddKey -q %s --key-file %s ",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($old));
+        } else {
+            $cmd = sprintf("echo -n %s | cryptsetup luksAddKey -q ".
+                " %s --key-file=-",
+                escapeshellarg($old),
+                escapeshellarg($this->getDeviceFile()));
         }
-        switch($newIsFile) {
-            case TRUE:
-                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
-                break;
-            case FALSE:
-            default:
-                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        if (TRUE === $newIsFile) {
+            $cmd .= escapeshellarg($new);
+        } else {
+            $cmd .= sprintf(" <(echo -n %s)", escapeshellarg($new));
+            // N.B. Need to use bash rather than default sh here for
+            // process substitution method of injecting new passphrase
+            $cmd = sprintf("/bin/bash -c '%s'", $cmd);
         }
-        // N.B. Need to use bash rather than default sh here for
-        // process substitution method of injecting new passphrase
-        if(FALSE === $newIsFile)
-            $cmd = "/bin/bash -c '".$cmd."'";
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -546,39 +536,32 @@ class Container extends \OMV\System\Storage\StorageDevice {
      */
     public function changeKey($old,
                               $new,
-                              $oldIsFile=FALSE,
-                              $newIsFile=FALSE) {
+                              $oldIsFile = FALSE,
+                              $newIsFile = FALSE) {
         // Build command line
-        $cmd = "export LANG=C; ";
-        switch($oldIsFile) {
-            case TRUE:
-                $cmd .= sprintf("cryptsetup luksChangeKey -q ".
-                            "%s --key-file %s ",
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($old));
-                break;
-            case FALSE:
-            default:
-                $cmd .= sprintf("echo -n %s | cryptsetup luksChangeKey -q ".
-                            " %s --key-file=- ",
-                            escapeshellarg($old),
-                            escapeshellarg($this->getDeviceFile()));
+        if (TRUE === $oldIsFile) {
+            $cmd = sprintf("cryptsetup luksChangeKey -q ".
+                "%s --key-file %s ",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($old));
+        } else {
+            $cmd = sprintf("echo -n %s | cryptsetup luksChangeKey -q ".
+                " %s --key-file=- ",
+                escapeshellarg($old),
+                escapeshellarg($this->getDeviceFile()));
         }
-        switch($newIsFile) {
-            case TRUE:
-                $cmd .= sprintf("%s 2>&1", escapeshellarg($new));
-                break;
-            case FALSE:
-            default:
-                $cmd .= sprintf("<(echo -n %s) 2>&1", escapeshellarg($new));
+        if (TRUE === $newIsFile) {
+            $cmd .= escapeshellarg($new);
+        } else {
+            $cmd .= sprintf("<(echo -n %s)", escapeshellarg($new));
+            // N.B. Need to use bash rather than default sh here for
+            // process substitution method of injecting new passphrase
+            $cmd = sprintf("/bin/bash -c '%s'", $cmd);
         }
-        // N.B. Need to use bash rather than default sh here for
-        // process substitution method of injecting new passphrase
-        if(FALSE === $newIsFile)
-            $cmd = "/bin/bash -c '".$cmd."'";
         // Execute
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -593,22 +576,19 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     public function removeKey($key, $keyIsFile=FALSE) {
-        switch($keyIsFile) {
-            case TRUE:
-                $cmd = sprintf("export LANG=C; cryptsetup luksRemoveKey -q ".
-                            "%s --key-file %s 2>&1",
-                            escapeshellarg($this->getDeviceFile()),
-                            escapeshellarg($key));
-                break;
-            case FALSE:
-            default:
-                $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s | ".
-                            "cryptsetup luksRemoveKey -q %s --key-file=- 2>&1'",
-                            escapeshellarg($key),
-                            escapeshellarg($this->getDeviceFile()));
+        if (TRUE === $keyIsFile) {
+            $cmd = sprintf("cryptsetup luksRemoveKey -q %s --key-file %s",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($key));
+        } else {
+            $cmd = sprintf("/bin/bash -c 'echo -n %s | ".
+                "cryptsetup luksRemoveKey -q %s --key-file=-'",
+                escapeshellarg($key),
+                escapeshellarg($this->getDeviceFile()));
         }
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -622,11 +602,12 @@ class Container extends \OMV\System\Storage\StorageDevice {
     public function killSlot($slot) {
         // Use batch mode to avoid needing a key - note this
         // makes it trivial to kill the last slot without warning!
-        $cmd = sprintf("export LANG=C; cryptsetup -q luksKillSlot %s %s 2>&1",
-                        escapeshellarg($this->getDeviceFile()),
-                        escapeshellarg($slot));
+        $cmd = sprintf("cryptsetup -q luksKillSlot %s %s",
+            escapeshellarg($this->getDeviceFile()),
+            escapeshellarg($slot));
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
         $this->refresh();
         return TRUE;
     }
@@ -642,74 +623,26 @@ class Container extends \OMV\System\Storage\StorageDevice {
      *         key matched (unlocked), otherwise FALSE.
      */
     public function testKey($key, $keyIsFile=FALSE) {
-        // Check what version of cryptsetup is installed to determine
-        // if the --test-passphrase argument is supported or not.
-        $cmd = "export LANG=C; cryptsetup --version 2>&1";
-        $process = new Process($cmd);
-        $process->execute($output,$result);
-        $cryptsetupVersion = str_replace("cryptsetup ", "", $output[0]);
-        $hasTestPassphrase = version_compare($cryptsetup_version, "1.5.0", ">=");
-        unset($cmd, $output, $result);
-        // Decide which codepath to use.
-        if(TRUE === $hasTestPassphrase) {
-            switch($keyIsFile) {
-                case TRUE:
-                    $cmd = sprintf("export LANG=C; cryptsetup luksOpen -v ".
-                                "--test-passphrase %s --key-file %s 2>&1",
-                                escapeshellarg($this->getDeviceFile()),
-                                escapeshellarg($key));
-                    break;
-                case FALSE:
-                default:
-                    $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                                "| cryptsetup luksOpen -v --test-passphrase %s ".
-                                "--key-file=- 2>&1'",
-                                escapeshellarg($key),
-                                escapeshellarg($this->getDeviceFile()));
-            }
-            $validCodes = array(0);
+        if (TRUE === $keyIsFile) {
+            $cmd = sprintf("cryptsetup luksOpen -v ".
+                "--test-passphrase %s --key-file %s",
+                escapeshellarg($this->getDeviceFile()),
+                escapeshellarg($key));
         } else {
-            // If the '--test-passphrase' argument is not available, use a
-            // workaround where we open the device (read only) with a temporary
-            // name and then close it later. If the device is already open, this
-            // fails with error code 5 (device already open or busy), but will
-            // still report which slot was unlocked if key is valid.
-            $tempName = uniqid("luksTest_");
-            switch($keyIsFile) {
-                case TRUE:
-                    $cmd = sprintf("export LANG=C; cryptsetup luksOpen -r -v ".
-                                "%s %s --key-file %s 2>&1",
-                                escapeshellarg($this->getDeviceFile()),
-                                escapeshellarg($tempName),
-                                escapeshellarg($key));
-                    break;
-                case FALSE:
-                default:
-                    $cmd = sprintf("/bin/bash -c 'export LANG=C; echo -n %s ".
-                                "| cryptsetup luksOpen -r -v %s %s ".
-                                "--key-file=- 2>&1'",
-                                escapeshellarg($key),
-                                escapeshellarg($this->getDeviceFile()),
-                                escapeshellarg($tempName));
-            }
-            $validCodes = array(0,5);
+            $cmd = sprintf("/bin/bash -c 'echo -n %s | ".
+                "cryptsetup luksOpen -v --test-passphrase %s --key-file=-'",
+                escapeshellarg($key),
+                escapeshellarg($this->getDeviceFile()));
         }
+
         // Test the key and get the key slot number if successful
         $process = new Process($cmd);
-        $tmp = $process->execute($out, $result);
-        if(!in_array($result, $validCodes)) {
+        $process->setRedirect2to1();
+        $process->execute($output, $exitStatus);
+        if ($exitStatus !== 0) {
             throw new \OMV\Exception($output);
         }
-        $slot = explode(" ",
-                        array_shift(
-                            preg_grep("/^Key slot \d unlocked.$/", $output)
-                        )
-                )[2];
-        // If we actually opened the device, under a temporary name, close it.
-        if (FALSE === $hasTestPassphrase) {
-            if($result === 0 && $this->getDecryptedName() == $tempName)
-                $this->close();
-        }
+        $slot = explode(" ", $output[0])[2];
         // Return which key slot was unlocked.
         return $slot;
     }
@@ -720,12 +653,12 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     public function backupHeader($filepath) {
-        $cmd = sprintf("export LANG=C; cryptsetup luksHeaderBackup ".
-                        "%s --header-backup-file %s 2>&1",
-                escapeshellarg($this->getDeviceFile()),
-                escapeshellarg($filepath));
+        $cmd = sprintf("cryptsetup luksHeaderBackup %s --header-backup-file %s",
+            escapeshellarg($this->getDeviceFile()),
+            escapeshellarg($filepath));
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output,$exitStatus);
         return TRUE;
     }
 
@@ -735,12 +668,13 @@ class Container extends \OMV\System\Storage\StorageDevice {
      * @return TRUE if successful, otherwise FALSE.
      */
     public function restoreHeader($filepath) {
-        $cmd = sprintf("export LANG=C; cryptsetup luksHeaderRestore -q ".
-                        "%s --header-backup-file %s 2>&1",
+        $cmd = sprintf("cryptsetup luksHeaderRestore -q ".
+                        "%s --header-backup-file %s",
                 escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($filepath));
         $process = new Process($cmd);
-        $process->execute($output,$result);
+        $process->setRedirect2to1();
+        $process->execute($output,$exitStatus);
         $this->refresh();
         return TRUE;
     }

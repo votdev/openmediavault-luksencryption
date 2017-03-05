@@ -4,7 +4,7 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2016 Volker Theile
- * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2017 OpenMediaVault Plugin Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,14 @@ namespace OMV\System\Storage\Backend;
 /**
  * Implements the storage device backend for (open) LUKS containers.
  */
-class LUKS extends DM {
+class LUKS extends DM
+{
     function enumerate() {
         $devs = parent::enumerate();
-        if(FALSE === $devs)
+        if (FALSE === $devs)
             return FALSE;
-        $result = array();
-        foreach($devs as $devk => $devv) {
+        $result = [];
+        foreach ($devs as $devk => $devv) {
             // Check if the given device is a LUKS container.
             $object = $this->getImpl($devv);
             if (!$object->exists())
@@ -42,7 +43,7 @@ class LUKS extends DM {
 
     function isTypeOf($deviceFile) {
         // Check if the given device is of type device mapper.
-        if(FALSE === parent::isTypeOf($deviceFile))
+        if (FALSE === parent::isTypeOf($deviceFile))
             return FALSE;
         // Check if it is an open LUKS container.
         $object = new \OMV\System\Storage\StorageDeviceLuks($deviceFile);

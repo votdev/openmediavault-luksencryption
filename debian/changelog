@@ -1,3 +1,12 @@
+openmediavault-luksencryption (3.0.1) stable; urgency=low
+
+  * Fix slot message when testing keys
+  * Fix postinst bug
+  * Fix remove error
+  * Code cleanup
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Sun, 05 Mar 2017 14:21:23 -0600
+
 openmediavault-luksencryption (3.0.0) stable; urgency=low
 
   * Port to OMV 3.0.54

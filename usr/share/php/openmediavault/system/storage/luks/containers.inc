@@ -4,7 +4,7 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2017 OpenMediaVault Plugin Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,22 +34,22 @@ class Containers {
      * )
      */
     public static function enumerate() {
-        $cmd = "export LANG=C; blkid -t TYPE=crypto_LUKS -o device 2>/dev/null";
+        $cmd = "blkid -t TYPE=crypto_LUKS -o device";
         $process = new \OMV\System\Process($cmd);
         $process->setQuiet();
-        $process->execute($out, $result);
-        if(!in_array($result, array(0,2), TRUE))
-            return FALSE;
-        $list = array();
-        // Parse command output:
-        //   /dev/sdc
-        //   /dev/sdd
-        //   unknown device
-        foreach($out as $outputk => $outputv) {
-            $deviceFile = trim($outputv);
-            if(!is_devicefile($deviceFile))
-                continue;
-            $list[] = $deviceFile;
+        $process->execute($output, $exitStatus);
+        $list = [];
+        if ($exitStatus == 0) {
+            // Parse command output:
+            //   /dev/sdc
+            //   /dev/sdd
+            //   unknown device
+            foreach ($output as $outputk => $outputv) {
+                $deviceFile = trim($outputv);
+                if (!is_devicefile($deviceFile))
+                    continue;
+                $list[] = $deviceFile;
+            }
         }
         return $list;
     }
