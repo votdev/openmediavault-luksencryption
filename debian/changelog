@@ -4,6 +4,7 @@ openmediavault-luksencryption (3.0.1) stable; urgency=low
   * Fix postinst bug
   * Fix remove error
   * Code cleanup
+  * Update locales
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Sun, 05 Mar 2017 14:21:23 -0600
 
