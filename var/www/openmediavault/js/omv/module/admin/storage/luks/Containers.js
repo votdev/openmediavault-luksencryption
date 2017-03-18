@@ -1262,6 +1262,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             dataIndex: "size",
             stateId: "size"
         },{
+            xtype: "textcolumn",
             text: _("Unlocked"),
             sortable: true,
             dataIndex: "unlocked",
@@ -1290,6 +1291,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 return "";
             }
         },{
+            xtype: "textcolumn",
             text: _("Decrypted device"),
             sortable: true,
             dataIndex: "decrypteddevicefile",
@@ -1301,6 +1303,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 return value;
             }
         },{
+            xtype: "textcolumn",
             text: _("Referenced"),
             sortable: true,
             dataIndex: "_used",
@@ -1316,6 +1319,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 return value;
             }
         },{
+            xtype: "textcolumn",
             text: _("Key slots in use"),
             sortable: true,
             dataIndex: "usedslots",

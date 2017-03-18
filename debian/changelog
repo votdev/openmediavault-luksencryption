@@ -1,3 +1,9 @@
+openmediavault-luksencryption (3.0.2) stable; urgency=low
+
+  * Improve foreign content handling
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Sat, 18 Mar 2017 10:25:28 -0500
+
 openmediavault-luksencryption (3.0.1) stable; urgency=low
 
   * Fix slot message when testing keys
