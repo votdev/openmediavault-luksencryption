@@ -1300,7 +1300,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 if (!value || 0 === value.length) {
                     value = _("n/a");
                 }
-                return value;
+                return Ext.String.htmlEncode(value);
             }
         },{
             xtype: "textcolumn",
@@ -1316,7 +1316,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                 } else {
                     value = OMV.util.Format.boolean(value);
                 }
-                return value;
+                return Ext.String.htmlEncode(value);
             }
         },{
             xtype: "textcolumn",
@@ -1325,7 +1325,7 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             dataIndex: "usedslots",
             stateId: "usedslots",
             renderer: function(value) {
-                return value + "/8";
+                return Ext.String.htmlEncode(value) + "/8";
             }
         }],
 
