@@ -1320,6 +1320,16 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             }
         },{
             xtype: "textcolumn",
+            text: _("LUKS UUID"),
+            hidden: true,
+            sortable: true,
+            dataIndex: "uuid",
+            stateId: "uuid",
+            renderer: function(value) {
+                return "UUID=" + Ext.String.htmlEncode(value);
+            }
+        },{
+            xtype: "textcolumn",
             text: _("Key slots in use"),
             sortable: true,
             dataIndex: "usedslots",
