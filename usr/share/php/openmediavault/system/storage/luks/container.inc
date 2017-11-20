@@ -346,11 +346,11 @@ class Container extends \OMV\System\Storage\StorageDevice {
      */
     public function create($key, $keyIsFile=FALSE) {
         if (TRUE === $keyIsFile) {
-            $cmd = sprintf("cryptsetup luksFormat %s --key-file %s",
+            $cmd = sprintf("cryptsetup luksFormat -q %s %s",
                 escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($key));
         } else {
-            $cmd = sprintf("echo -n %s | cryptsetup luksFormat %s --key-file=-",
+            $cmd = sprintf("echo -n %s | cryptsetup luksFormat -q %s",
                 escapeshellarg($key),
                 escapeshellarg($this->getDeviceFile()));
         }
@@ -496,12 +496,11 @@ class Container extends \OMV\System\Storage\StorageDevice {
                            $newIsFile = FALSE) {
         // Build command line
         if (TRUE === $oldIsFile) {
-            $cmd = sprintf("cryptsetup luksAddKey -q %s --key-file %s ",
+            $cmd = sprintf("cryptsetup luksAddKey -q %s -d %s ",
                 escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($old));
         } else {
-            $cmd = sprintf("echo -n %s | cryptsetup luksAddKey -q ".
-                " %s --key-file=-",
+            $cmd = sprintf("echo -n %s | cryptsetup luksAddKey -q " . " %s ",
                 escapeshellarg($old),
                 escapeshellarg($this->getDeviceFile()));
         }
