@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Paolo Velati <paolo.velati@gmail.com>, 2016
+# Paolo Velati <paolo.velati@gmail.com>, 2016-2017
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2016-09-07 12:35+0000\n"
+"PO-Revision-Date: 2017-09-22 17:18+0000\n"
 "Last-Translator: Paolo Velati <paolo.velati@gmail.com>\n"
 "Language-Team: Italian (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/it/)\n"
 "MIME-Version: 1.0\n"
@@ -25,7 +25,7 @@ msgid "Add"
 msgstr "Aggiungi"
 
 msgid "Add passphrase"
-msgstr ""
+msgstr "Aggiungi passphrase"
 
 msgid "Backup header"
 msgstr ""
@@ -37,13 +37,13 @@ msgid "Change"
 msgstr "Cambia"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "Cambia passphrase"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Scegli uno slot da terminare ..."
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "Conferma passphrase"
 
 msgid "Confirmation"
 msgstr "Conferma"
@@ -52,16 +52,16 @@ msgid "Create"
 msgstr "Crea"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "Crea un dispositivo cifrato"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "Passphrase corrente"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "Decifra dispositivo"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "Elimina dispositivo cifrato"
 
 msgid "Detail"
 msgstr "Dettagli"
@@ -98,7 +98,7 @@ msgid "Encrypted Devices"
 msgstr "Dispositivi cifrati"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "Dettagli dispositivo cifrato"
 
 msgid "Encryption"
 msgstr "Crittografia"
@@ -151,10 +151,10 @@ msgid "Header file"
 msgstr ""
 
 msgid "Key slot"
-msgstr ""
+msgstr "Slot chiave"
 
 msgid "Key slots in use"
-msgstr ""
+msgstr "Slot chiave in uso"
 
 msgid "Keys"
 msgstr "Chiavi"
@@ -163,13 +163,13 @@ msgid "Kill"
 msgstr "Uccidi"
 
 msgid "Kill key slot"
-msgstr ""
+msgstr "Termina slot chiave"
 
 msgid "Kill slot"
-msgstr ""
+msgstr "Termina slot"
 
 msgid "LUKS container on '%s' not found"
-msgstr ""
+msgstr "Container LUKS su '%s' non trovato"
 
 msgid "LUKS encrypted device %s [%s, %s]"
 msgstr ""
@@ -204,10 +204,10 @@ msgid ""
 msgstr ""
 
 msgid "Passphrase"
-msgstr ""
+msgstr "Passphrase"
 
 msgid "Passphrases don't match"
-msgstr ""
+msgstr "Passphrase non corrisponde"
 
 msgid "Recovery"
 msgstr "Recupero"
@@ -240,7 +240,7 @@ msgid "Test"
 msgstr "Testa"
 
 msgid "Test passphrase"
-msgstr ""
+msgstr "Prova passphrase"
 
 msgid "The UUID of the LUKS header backup file "
 msgstr ""
@@ -269,13 +269,13 @@ msgid "Unlock"
 msgstr "Sblocca"
 
 msgid "Unlock encrypted device"
-msgstr ""
+msgstr "Sblocca dispositivo cifrato"
 
 msgid "Unlocked"
 msgstr "Sbloccato"
 
 msgid "Unlocking ..."
-msgstr ""
+msgstr "Sblocco in corso ..."
 
 msgid "Upload header backup file"
 msgstr ""

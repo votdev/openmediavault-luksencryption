@@ -3,197 +3,197 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Raul Fernandez Garcia <raulfg3@gmail.com>, 2015
+# Jonatan Nyberg, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2017-09-22 17:18+0000\n"
-"Last-Translator: Raul Fernandez Garcia <raulfg3@gmail.com>\n"
-"Language-Team: Spanish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/es/)\n"
+"PO-Revision-Date: 2017-11-27 03:36+0000\n"
+"Last-Translator: Jonatan Nyberg\n"
+"Language-Team: Swedish (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/sv/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: es\n"
+"Language: sv\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr "%s no es una cabecera LUKS de backup válida."
+msgstr "%s är inte ett giltigt LUKS header säkerhetskopia"
 
 msgid "Add"
-msgstr "Añadir"
+msgstr "Lägg till"
 
 msgid "Add passphrase"
-msgstr "Añadir contraseña"
+msgstr "Lägg till lösenordsfras"
 
 msgid "Backup header"
-msgstr "Salvar cabecera"
+msgstr "Säkerhetskopiera header"
 
 msgid "Cancel"
-msgstr "Cancelar"
+msgstr "Avbryt"
 
 msgid "Change"
-msgstr "Cambiar"
+msgstr "Ändra"
 
 msgid "Change passphrase"
-msgstr "Cambiar contraseña"
+msgstr "Ändra lösenordsfras"
 
 msgid "Choose a slot to kill ..."
-msgstr "Elija una ranura para borrar ..."
+msgstr ""
 
 msgid "Confirm passphrase"
-msgstr "Confirmar contraseña"
+msgstr "Bekräfta lösenordsfrasen"
 
 msgid "Confirmation"
-msgstr "Confirmación"
+msgstr "Bekräftelse"
 
 msgid "Create"
-msgstr "Crear"
+msgstr "Skapa"
 
 msgid "Create encrypted device"
-msgstr "Crear un disco cifrado"
+msgstr "Skapa krypterad enhet"
 
 msgid "Current passphrase"
-msgstr "Contraseña actual"
+msgstr "Nuvarande lösenfras"
 
 msgid "Decrypted device"
-msgstr "Disco descifrado"
+msgstr "Dekrypterad enhet"
 
 msgid "Delete encrypted device"
-msgstr "Borrar disco cifrado"
+msgstr "Ta bort krypterad enhet"
 
 msgid "Detail"
-msgstr "Detalle"
+msgstr "Detalj"
 
 msgid "Device"
-msgstr "Disco"
+msgstr "Enhet"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
 "will be destroyed and all data will be lost."
-msgstr "¿Realmente desea borrar el disco cifrado? <br/>La clave de cifrado será destruida y los datos se perderán."
+msgstr "Vill du verkligen ta bort den krypterade enheten?<br/>Krypteringsnyckeln kommer att förstöras och all data kommer att gå förlorad."
 
 msgid ""
 "Do you really want to encrypt this device? Any existing data on it will be "
 "deleted."
-msgstr "¿Realmente desea cifrar este disco? Todos los datos existentes en el , serán borrados."
+msgstr "Vill du verkligen kryptera den här enheten? All befintliga data på den kommer att tas bort."
 
 msgid ""
 "Do you really want to kill this key slot? Ensure that you have another key "
 "which will unlock the device."
-msgstr "¿Realmente desea borrar esta ranura?. Asegurese de tener una llave válida para poder desbloquear el dispositivo.."
+msgstr "Vill du verkligen döda denna nyckelplats? Se till att du har en annan nyckel som låser upp enheten."
 
 msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
 "passphrase which will unlock the device."
-msgstr "¿Realmente desea eliminar esta contraseña?, Asegurese de que existe otra contraseña con la que se pueda descifrar el disco."
+msgstr "Vill du verkligen ta bort lösenordsfrasen? Se till att du har en annan lösenfras som låser upp enheten."
 
 msgid ""
 "Do you really want to write the header to the device?<br/>Replacing the "
 "header will destroy existing key slots."
-msgstr "¿Realmente desea sobreescribir la cabecera del disco?. <br/>Remplazar la cabecera destruirá todas las ranuras para llaves."
+msgstr "Vill du verkligen skriva header till enheten?<br/>Byte av header kommer att förstöra nuvarande nyckelplatser."
 
 msgid "Encrypted Devices"
-msgstr "Discos Cifrados"
+msgstr "Krypterade enheter"
 
 msgid "Encrypted device details"
-msgstr "Detalle de los discos cifrados"
+msgstr "Krypterad enhet detaljer"
 
 msgid "Encryption"
-msgstr "Cifrado"
+msgstr "Kryptering"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
-msgstr "Introduzca una contraseña válida que descifre el disco."
+msgstr "Ange ett befintligt, giltigt lösenord som låser upp enheten."
 
 msgid "Enter an existing, valid passphrase which you want to change."
-msgstr "Introduzca una contraseña válida y existente que desee cambiar."
+msgstr "Ange en befintlig, giltig lösenordsfras som du vill ändra."
 
 msgid ""
 "Enter an existing, valid passphrase which you want to remove from the "
 "encrypted device."
-msgstr "Introduzca una contraseña válida y existente que Vd. quiera eliminar del dispositivo cifrado."
+msgstr "Ange en befintlig, giltig lösenordsfras som du vill ta bort från den krypterade enheten."
 
 msgid "Failed to add the passphrase to the encrypted device: %s"
-msgstr "Error al añadir la contraseña al disco cifrado: %s"
+msgstr "Misslyckades med att lägga till lösenordsfrasen i den krypterade enheten: %s"
 
 msgid "Failed to change the passphrase for the encrypted device: %s"
-msgstr "Error al cambiar la contraseña del disco cifrado: %s"
+msgstr "Misslyckades med att ändra lösenordsfrasen för den krypterade enheten: %s"
 
 msgid "Failed to create encrypted device: %s"
-msgstr "Error al crear el disco cifrado: %s"
+msgstr "Misslyckades med att skapa krypterad enhet: %s"
 
 msgid "Failed to extract the LUKS header from "
-msgstr "Error al extraer las cabeceras LUKS"
+msgstr "Misslyckades med att extrahera LUKS-header från"
 
 msgid "Failed to get list of devices"
-msgstr "Error al conseguir la lista de discos"
+msgstr "Misslyckades med att få lista över enheter"
 
 msgid "Failed to get list of encrypted devices"
-msgstr "Error al conseguir la lista de discos cifrados"
+msgstr "Misslyckades med att få en lista över krypterade enheter"
 
 msgid "Failed to kill the key slot on the encrypted device: %s"
-msgstr "Error al borrar la ranura seleccionada en el disco encriptado: %s"
+msgstr ""
 
 msgid "Failed to remove the encrypted device: %s"
-msgstr "Error al borrar el disco cifrado: %s"
+msgstr "Misslyckades med att ta bort den krypterade enheten: %s"
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
-msgstr "Error al eliminar la contraseña del disco cifrado: %s"
+msgstr ""
 
 msgid "Failed to restore the LUKS header to "
-msgstr "Error al restaurar las cabeceras LUKS"
+msgstr ""
 
 msgid "Force"
-msgstr "Forzar"
+msgstr "Tvinga"
 
 msgid "Header file"
-msgstr "Archivo con las cabeceras"
+msgstr ""
 
 msgid "Key slot"
-msgstr "Ranura para llave"
+msgstr ""
 
 msgid "Key slots in use"
-msgstr "Ranuras en uso"
+msgstr ""
 
 msgid "Keys"
-msgstr "Contraseñas"
+msgstr "Nycklar"
 
 msgid "Kill"
-msgstr "Borrar"
+msgstr "Döda"
 
 msgid "Kill key slot"
-msgstr "Borrar ranura"
+msgstr ""
 
 msgid "Kill slot"
-msgstr "Borrar ranura"
+msgstr ""
 
 msgid "LUKS container on '%s' not found"
-msgstr "Contenedor LUKS en '%s' no encontrado"
+msgstr "LUKS behållare på \"%s\" inte funnen"
 
 msgid "LUKS encrypted device %s [%s, %s]"
-msgstr "Disco cifrado LUKS %s [%s, %s]"
+msgstr "LUKS krypterad enhet %s [%s, %s]"
 
 msgid "Lock"
-msgstr "Bloquear"
+msgstr "Lås"
 
 msgid "Locking device ..."
-msgstr "Bloqueando disco ..."
+msgstr "Låser enhet ..."
 
 msgid "New passphrase to add to the encrypted device"
-msgstr "Nueva contraseña a añadir al disco cifrado."
+msgstr "Ny lösenordsfras som ska läggas till den krypterade enheten"
 
 msgid "New passphrase to replace the existing one (above)"
-msgstr "Nueva contraseña para remplazar a la existente."
+msgstr "Ny lösenfras som ersätter den befintliga (ovan)"
 
 msgid "No"
-msgstr "No"
+msgstr "Nej"
 
 msgid "No encryption found on '%s'"
-msgstr "No se ha encontrado cifrado alguno en '%s'"
+msgstr "Ingen kryptering hittades på \"%s\""
 
 msgid "No storage device backend exists for device %s"
-msgstr "No existe suficiente espacio en disco en %s"
+msgstr "Det finns ingen lagringsenhets backend för enheten %s"
 
 msgid "OK"
 msgstr "OK"
@@ -201,90 +201,90 @@ msgstr "OK"
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
 "device."
-msgstr "Sobreescribir la cabecera incluso si no coincide con la del UUID del backup"
+msgstr ""
 
 msgid "Passphrase"
-msgstr "Contraseña"
+msgstr "Lösenfras"
 
 msgid "Passphrases don't match"
-msgstr "La contraseña no coincide"
+msgstr "Lösenfraser matchar inte"
 
 msgid "Recovery"
-msgstr "Recuperación"
+msgstr "Återhämtning"
 
 msgid "Referenced"
-msgstr "Referenciado"
+msgstr "Refererade"
 
 msgid "Remove"
-msgstr "Eliminar"
+msgstr "Ta bort"
 
 msgid "Remove passphrase"
-msgstr "Eliminar contraseña"
+msgstr "Ta bort lösenfrasen"
 
 msgid "Restore encrypted device header"
-msgstr "Recuperar la cabecera del disco cifrado"
+msgstr ""
 
 msgid "Restore header"
-msgstr "Recuperar cabecera"
+msgstr ""
 
 msgid "Select a device ..."
-msgstr "Seleccionar un Disco ..."
+msgstr "Välj en enhet ..."
 
 msgid "Size"
-msgstr "Tamaño"
+msgstr "Storlek"
 
 msgid "Success"
-msgstr "Hecho"
+msgstr "Lyckades"
 
 msgid "Test"
-msgstr "Test"
+msgstr "Testa"
 
 msgid "Test passphrase"
-msgstr "Contraseña de Test"
+msgstr "Testa lösenfrasen"
 
 msgid "The UUID of the LUKS header backup file "
-msgstr "UUID de la cabecera de backup LUKS"
+msgstr ""
 
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
 "find out which slot you want to destroy."
-msgstr "Ranura para borrar. Use la \"Frase de Test\" o \"Detalle\" para averiguar que ranura en concreto desea borrar."
+msgstr ""
 
 msgid "The passphrase did not unlock any key slot on the device"
-msgstr "La frase no desbloquea ninguna ranura en este disco."
+msgstr ""
 
 msgid "The passphrase successfully unlocked key slot "
-msgstr "La frase ha desbloqueado con exito una ranura"
+msgstr ""
 
 msgid "UUID"
 msgstr "UUID"
 
 msgid "Unable to lock encrypted device: %s"
-msgstr "Imposible de bloquear el disco cifrado: %s"
+msgstr "Det gick inte att låsa krypterad enhet: %s"
 
 msgid "Unable to unlock encrypted device: %s"
-msgstr "Imposible de desbloquear el disco cifrado: %s"
+msgstr "Det går inte att låsa upp krypterad enhet: %s"
 
 msgid "Unlock"
-msgstr "Desbloquear"
+msgstr "Lås upp"
 
 msgid "Unlock encrypted device"
-msgstr "Desbloquear disco cifrado"
+msgstr "Lås upp krypterad enhet"
 
 msgid "Unlocked"
-msgstr "Desbloqueado"
+msgstr "Olåst"
 
 msgid "Unlocking ..."
-msgstr "Desbloqueando ..."
+msgstr "Låser upp ..."
 
 msgid "Upload header backup file"
-msgstr "Subir el archivo de backup d ela cabecera"
+msgstr ""
 
 msgid "Uploading header backup file ..."
-msgstr "Subiendo el archivo de backup de las cabeceras ...."
+msgstr ""
 
 msgid "Yes"
-msgstr "Si"
+msgstr "Ja"
 
 msgid "n/a"
-msgstr "n/d"
+msgstr ""

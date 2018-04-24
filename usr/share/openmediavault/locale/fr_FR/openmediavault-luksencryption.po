@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Axel Cantenys <clexanis@gmail.com>, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2015-11-12 19:04+0000\n"
-"Last-Translator: Aaron Murray <aaronmurray27@gmail.com>\n"
+"PO-Revision-Date: 2017-11-11 15:12+0000\n"
+"Last-Translator: Axel Cantenys <clexanis@gmail.com>\n"
 "Language-Team: French (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -18,272 +19,272 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 msgid "%s is not a valid LUKS header backup file"
-msgstr ""
+msgstr "%s n'est pas un fichier d'en-tête LUKS valide"
 
 msgid "Add"
-msgstr ""
+msgstr "Ajouter"
 
 msgid "Add passphrase"
-msgstr ""
+msgstr "Ajouter une phrase secrète"
 
 msgid "Backup header"
-msgstr ""
+msgstr "Sauvegarder l'en-tête"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Annuler"
 
 msgid "Change"
-msgstr ""
+msgstr "Changer"
 
 msgid "Change passphrase"
-msgstr ""
+msgstr "Modifier la phrase secrète"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Choisissez un emplacement à supprimer ..."
 
 msgid "Confirm passphrase"
-msgstr ""
+msgstr "Confirmez la phrase secrète"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Confirmation"
 
 msgid "Create"
-msgstr ""
+msgstr "Créer"
 
 msgid "Create encrypted device"
-msgstr ""
+msgstr "Créer un dispositif chiffré"
 
 msgid "Current passphrase"
-msgstr ""
+msgstr "Phrase secrète actuelle"
 
 msgid "Decrypted device"
-msgstr ""
+msgstr "Dispositif déchiffré"
 
 msgid "Delete encrypted device"
-msgstr ""
+msgstr "Supprimer le dispositif chiffré"
 
 msgid "Detail"
-msgstr ""
+msgstr "Détail"
 
 msgid "Device"
-msgstr ""
+msgstr "Dispositif"
 
 msgid ""
 "Do you really want to delete the encrypted device?<br/>The encryption key "
 "will be destroyed and all data will be lost."
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer le dispositif chiffré ?\nLa clé de chiffrement sera détruite et toutes les données seront perdues."
 
 msgid ""
 "Do you really want to encrypt this device? Any existing data on it will be "
 "deleted."
-msgstr ""
+msgstr "Voulez-vous vraiment crypter ce dispositif ?\nToutes les données existantes seront supprimées."
 
 msgid ""
 "Do you really want to kill this key slot? Ensure that you have another key "
 "which will unlock the device."
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer cette emplacement de clé ?\nAssurez-vous d'avoir une autre clé qui déverrouillera le dispositif."
 
 msgid ""
 "Do you really want to remove this passphrase? Ensure that you have another "
 "passphrase which will unlock the device."
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer cette phrase secrète ?\nAssurez-vous d'avoir une autre phrase secrète qui déverrouillera le dispositif."
 
 msgid ""
 "Do you really want to write the header to the device?<br/>Replacing the "
 "header will destroy existing key slots."
-msgstr ""
+msgstr "Voulez-vous vraiment écrire l'en-tête sur l'appareil ?\nLe remplacement de l'en-tête détruira les emplacements de clé existants."
 
 msgid "Encrypted Devices"
-msgstr ""
+msgstr "Dispositif crypté"
 
 msgid "Encrypted device details"
-msgstr ""
+msgstr "Détail du dispositif crypté"
 
 msgid "Encryption"
-msgstr ""
+msgstr "Cryptage"
 
 msgid "Enter an existing, valid passphrase that unlocks the device."
-msgstr ""
+msgstr "Entrez une phrase secrète existante et valide qui déverrouille le dispositif."
 
 msgid "Enter an existing, valid passphrase which you want to change."
-msgstr ""
+msgstr "Entrez une phrase secrète existante et valide que vous souhaitez modifier."
 
 msgid ""
 "Enter an existing, valid passphrase which you want to remove from the "
 "encrypted device."
-msgstr ""
+msgstr "Entrez une phrase secrète existante et valide que vous souhaitez supprimer du dispositif chiffré."
 
 msgid "Failed to add the passphrase to the encrypted device: %s"
-msgstr ""
+msgstr "Échec de l'ajout de la phrase secrète au dispositif chiffré :\n%s"
 
 msgid "Failed to change the passphrase for the encrypted device: %s"
-msgstr ""
+msgstr "Échec du changement de la phrase secrète au dispositif chiffré :\n%s"
 
 msgid "Failed to create encrypted device: %s"
-msgstr ""
+msgstr "Échec de création du dispositif chiffré :\n%s"
 
 msgid "Failed to extract the LUKS header from "
-msgstr ""
+msgstr "Échec de l'extraction de l'en-tête LUKS"
 
 msgid "Failed to get list of devices"
-msgstr ""
+msgstr "Échec d'obtention de la liste des dispositifs"
 
 msgid "Failed to get list of encrypted devices"
-msgstr ""
+msgstr "Échec d'obtention de la liste des dispositifs chiffrés"
 
 msgid "Failed to kill the key slot on the encrypted device: %s"
-msgstr ""
+msgstr "Échec de suppression de l'emplacement de clé sur le dispositif chiffré :\n%s"
 
 msgid "Failed to remove the encrypted device: %s"
-msgstr ""
+msgstr "Échec de suppression du dispositif chiffré :\n%s"
 
 msgid "Failed to remove the passphrase from the encrypted device: %s"
-msgstr ""
+msgstr "Échec de suppression de la phrase secrète du dispositif chiffré :\n%s"
 
 msgid "Failed to restore the LUKS header to "
-msgstr ""
+msgstr "Échec de restauration de l'en-tête LUKS"
 
 msgid "Force"
-msgstr ""
+msgstr "Forcer"
 
 msgid "Header file"
-msgstr ""
+msgstr "Fichier d'en-tête"
 
 msgid "Key slot"
-msgstr ""
+msgstr "Emplacement de clé"
 
 msgid "Key slots in use"
-msgstr ""
+msgstr "Emplacement de clé utilisé"
 
 msgid "Keys"
-msgstr ""
+msgstr "Clés"
 
 msgid "Kill"
-msgstr ""
+msgstr "Supprimer"
 
 msgid "Kill key slot"
-msgstr ""
+msgstr "Supprimer l'emplacement de clé"
 
 msgid "Kill slot"
-msgstr ""
+msgstr "Supprimer l’emplacement"
 
 msgid "LUKS container on '%s' not found"
-msgstr ""
+msgstr "Conteneur LUKS sur « %s » non trouvé"
 
 msgid "LUKS encrypted device %s [%s, %s]"
-msgstr ""
+msgstr "Dispositif crypté LUKS %s [%s, %s]"
 
 msgid "Lock"
-msgstr ""
+msgstr "Verouiller"
 
 msgid "Locking device ..."
-msgstr ""
+msgstr "Verrouillage du dispositif ..."
 
 msgid "New passphrase to add to the encrypted device"
-msgstr ""
+msgstr "Nouvelle phrase secrète à ajouter au dispositif chiffré"
 
 msgid "New passphrase to replace the existing one (above)"
-msgstr ""
+msgstr "Nouvelle phrase secrète pour remplacer la phrase existante (ci-dessus)"
 
 msgid "No"
-msgstr ""
+msgstr "Non"
 
 msgid "No encryption found on '%s'"
-msgstr ""
+msgstr "Pas de cryptage trouvé sur « %s »"
 
 msgid "No storage device backend exists for device %s"
-msgstr ""
+msgstr "Aucun système dorsal du périphérique de stockage n'existe pour le dispositif %s"
 
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 msgid ""
 "Overwrite the header even if the UUID from the backup doesn't match the "
 "device."
-msgstr ""
+msgstr "Remplacez l'en-tête même si l'identifiant UUID de la sauvegarde ne correspond pas au dispositif."
 
 msgid "Passphrase"
-msgstr ""
+msgstr "Phrase secrète"
 
 msgid "Passphrases don't match"
-msgstr ""
+msgstr "Les phrases secrètes ne corresponde pas"
 
 msgid "Recovery"
-msgstr ""
+msgstr "Restauration"
 
 msgid "Referenced"
-msgstr ""
+msgstr "Référencé"
 
 msgid "Remove"
-msgstr ""
+msgstr "Supprimer"
 
 msgid "Remove passphrase"
-msgstr ""
+msgstr "Supprimer la phrase secrète"
 
 msgid "Restore encrypted device header"
-msgstr ""
+msgstr "Restaurer l'en-tête du dispositif chiffré"
 
 msgid "Restore header"
-msgstr ""
+msgstr "Restaurer l'en-tête"
 
 msgid "Select a device ..."
-msgstr ""
+msgstr "Sélectionner un dispositif ..."
 
 msgid "Size"
-msgstr ""
+msgstr "Taille"
 
 msgid "Success"
-msgstr ""
+msgstr "Succès"
 
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 msgid "Test passphrase"
-msgstr ""
+msgstr "Test de phrase secrète"
 
 msgid "The UUID of the LUKS header backup file "
-msgstr ""
+msgstr "L'identifiant UUID de sauvegarde de l'en-tête LUKS"
 
 msgid ""
 "The key slot to kill. Use the 'Test passphrase' or 'Detail' functions to "
 "find out which slot you want to destroy."
-msgstr ""
+msgstr "L'emplacement de clé à détruire. Utilisez les fonctions « Test de phrase secrète » ou « Détail » pour trouver l'emplacement que vous voulez détruire."
 
 msgid "The passphrase did not unlock any key slot on the device"
-msgstr ""
+msgstr "La phrase secrète n'a déverrouillé aucun emplacement de clé sur le dispositif"
 
 msgid "The passphrase successfully unlocked key slot "
-msgstr ""
+msgstr "La phrase secrète a réussi à déverrouiller l'emplacement de la clé"
 
 msgid "UUID"
-msgstr ""
+msgstr "Identifiant UUID"
 
 msgid "Unable to lock encrypted device: %s"
-msgstr ""
+msgstr "Impossible de verrouiller le dispositif chiffré :\n%s"
 
 msgid "Unable to unlock encrypted device: %s"
-msgstr ""
+msgstr "Impossible de déverrouiller le dispositif chiffré : \n%s"
 
 msgid "Unlock"
-msgstr ""
+msgstr "Déverrouiller"
 
 msgid "Unlock encrypted device"
-msgstr ""
+msgstr "Déverrouiller un dispositif chiffré"
 
 msgid "Unlocked"
-msgstr ""
+msgstr "Déverrouillé"
 
 msgid "Unlocking ..."
-msgstr ""
+msgstr "Déverrouillage ..."
 
 msgid "Upload header backup file"
-msgstr ""
+msgstr "Téléverser le fichier d'en-tête"
 
 msgid "Uploading header backup file ..."
-msgstr ""
+msgstr "Téléversement du le fichier d'en-tête ..."
 
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 msgid "n/a"
-msgstr ""
+msgstr "Non disponible"
