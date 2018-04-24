@@ -1,3 +1,10 @@
+openmediavault-luksencryption (3.0.3) stable; urgency=low
+
+  * Fix keyfile add
+  * Update locales
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Mon, 23 Apr 2018 19:52:39 -0500
+
 openmediavault-luksencryption (3.0.2) stable; urgency=low
 
   * Improve foreign content handling
