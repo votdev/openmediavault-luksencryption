@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Артур Мудрых <arturmon82@gmail.com>, 2017
+# Артур Мудрых <arturmon82@gmail.com>, 2017,2019
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-luksencryption\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-12 13:04-0600\n"
-"PO-Revision-Date: 2017-09-22 17:18+0000\n"
+"PO-Revision-Date: 2019-01-18 11:02+0000\n"
 "Last-Translator: Артур Мудрых <arturmon82@gmail.com>\n"
 "Language-Team: Russian (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-luksencryption/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -40,7 +40,7 @@ msgid "Change passphrase"
 msgstr "Изменить кодовую фразу"
 
 msgid "Choose a slot to kill ..."
-msgstr ""
+msgstr "Выберите слот для уничтожения ..."
 
 msgid "Confirm passphrase"
 msgstr "Подтвердите ключевую фразу"
@@ -160,13 +160,13 @@ msgid "Keys"
 msgstr "Ключи"
 
 msgid "Kill"
-msgstr ""
+msgstr "Уничтожить"
 
 msgid "Kill key slot"
-msgstr ""
+msgstr "Уничтожить слот ключа"
 
 msgid "Kill slot"
-msgstr ""
+msgstr "Уничтожить слот"
 
 msgid "LUKS container on '%s' not found"
 msgstr "Контейнер LUKS для '%s' не найден"

@@ -1,6 +1,7 @@
 openmediavault-luksencryption (3.0.4) stable; urgency=low
 
   * Add busybox to dependency list
+  * Update locales
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Mon, 11 Feb 2019 12:54:49 -0600
 
