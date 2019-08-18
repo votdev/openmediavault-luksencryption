@@ -4,7 +4,7 @@
  * @author    Volker Theile <volker.theile@openmediavault.org>
  * @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
  * @copyright Copyright (c) 2009-2015 Volker Theile
- * @copyright Copyright (c) 2015-2016 OpenMediaVault Plugin Developers
+ * @copyright Copyright (c) 2015-2019 OpenMediaVault Plugin Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,15 +36,6 @@
      */
     public function shouldStart() { return [ "email" ]; }
 
-    /**
-     * Generate the configuration.
-     * @throw E_EXEC_FAILED
-     */
-    public function applyConfig() {
-        $cmd = new \OMV\System\Process("omv-mkconf", "luks");
-        $cmd->setRedirect2to1();
-        $cmd->execute();
-    }
 
     /**
      * Get the notification configuration.

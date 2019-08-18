@@ -20,7 +20,6 @@ case "$1" in
         # package installation.
         dpkg-trigger update-fixperms
         dpkg-trigger update-locale
-
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
