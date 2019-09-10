@@ -1346,9 +1346,9 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             stateId: "usedslots",
             renderer: function(value,metaData,record) {
                 version = record.get('luksversion');
-                if (record.get("luksversion") == "1") {
+                if (version == "1") {
                     suffix = "/8";
-                } else {
+                } else if (version == "2") {
                     suffix = "/32";
                 }
                 return Ext.String.htmlEncode(value) + suffix;
