@@ -1330,12 +1330,28 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             }
         },{
             xtype: "textcolumn",
+            text: _("Version"),
+            hidden: true,
+            sortable: true,
+            dataIndex: "luksversion",
+            stateId: "luksversion",
+            renderer: function(value) {
+                return "LUKS" + Ext.String.htmlEncode(value);
+            }
+        },{
+            xtype: "textcolumn",
             text: _("Key slots in use"),
             sortable: true,
             dataIndex: "usedslots",
             stateId: "usedslots",
-            renderer: function(value) {
-                return Ext.String.htmlEncode(value) + "/8";
+            renderer: function(value,metaData,record) {
+                version = record.get('luksversion');
+                if (record.get("luksversion") == "1") {
+                    suffix = "/8";
+                } else {
+                    suffix = "/32";
+                }
+                return Ext.String.htmlEncode(value) + suffix;
             }
         }],
 
