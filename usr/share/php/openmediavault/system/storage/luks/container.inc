@@ -121,6 +121,7 @@ class Container extends \OMV\System\Storage\StorageDevice {
         $this->freeKeySlots           = 8;
         $this->deviceMapperDeviceFile = "";
         $this->deviceMapperName       = "";
+        $this->getLuksVersion         = "";
 
         // Look up the UUID for the LUKS container
         $cmd = sprintf("cryptsetup luksUUID %s", $this->getDeviceFile());
@@ -160,8 +161,18 @@ class Container extends \OMV\System\Storage\StorageDevice {
         $process = new Process($cmd);
         $process->execute($output, $exitStatus);
         $this->headerInfo = $output;
-        $this->usedKeySlots = count(preg_grep("/^Key Slot \d: ENABLED$/",
+
+        $version = explode(':',preg_replace('/\s/','',implode('', preg_grep("/^Version:/", $this->headerInfo))))[1];
+        
+        $this->luksVersion = $version;
+        if ($version == "1") {
+            $this->usedKeySlots = count(preg_grep("/^Key Slot \d: ENABLED$/",
+                                                 $this->headerInfo));
+        } elseif ($version == "2" ) {
+            $this->usedKeySlots = count(preg_grep("/^\s+(\d:\s)(luks2)/",
                                                 $this->headerInfo));
+        }
+
         $this->freeKeySlots = count(preg_grep("/^Key Slot \d: DISABLED$/",
                                                 $this->headerInfo));
 
@@ -257,6 +268,17 @@ class Container extends \OMV\System\Storage\StorageDevice {
         if ($this->getData() === FALSE)
             return FALSE;
         return $this->usedKeySlots;
+    }
+
+
+    /**
+     * Version of luks.
+     * @return version number of luks.
+     */
+    public function getLuksVersion() {
+        if ($this->getData() === FALSE)
+            return FALSE;
+        return $this->luksVersion;
     }
 
     /**
