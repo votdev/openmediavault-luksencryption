@@ -1,3 +1,9 @@
+openmediavault-luksencryption (5.0.1) stable; urgency=low
+
+  * Fix the display of number of slots used
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Tue, 10 Sep 2019 06:03:28 -0500
+
 openmediavault-luksencryption (5.0) stable; urgency=low
 
   * Update for OMV 5.x
