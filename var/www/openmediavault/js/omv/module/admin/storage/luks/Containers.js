@@ -38,6 +38,15 @@
  * @class OMV.module.admin.storage.luks.container.Create
  * @derived OMV.workspace.window.Form
  */
+
+Ext.apply(Ext.form.field.VTypes, {
+    lukslabel: function(v){
+        return /^[a-zA-Z0-9\_\-]+$/.test(v);
+    },
+    lukslabelText:("Invalid luks format label"),
+    lukslabelMask: /[a-zA-Z0-9\_\-]/
+});
+
 Ext.define("OMV.module.admin.storage.luks.container.Create", {
     extend: "OMV.workspace.window.Form",
     requires: [
@@ -86,37 +95,74 @@ Ext.define("OMV.module.admin.storage.luks.container.Create", {
     getFormItems: function() {
         var me = this;
         return [{
-            xtype: "combo",
-            name: "devicefile",
-            fieldLabel: _("Device"),
-            emptyText: _("Select a device ..."),
-            store: Ext.create("OMV.data.Store", {
-                autoLoad: true,
-                model: OMV.data.Model.createImplicit({
-                    idProperty: "devicefile",
-                    fields: [
-                        { name: "devicefile", type: "string" },
-                        { name: "description", type: "string" }
+            xtype: "fieldset",
+            title: _("Select device, cipher and label (optional)"),
+            defaults: {
+                labelSeparator: ""
+            },
+            items: [{
+                xtype: "combo",
+                name: "devicefile",
+                fieldLabel: _("Device"),
+                emptyText: _("Select a device ..."),
+                store: Ext.create("OMV.data.Store", {
+                    autoLoad: true,
+                    model: OMV.data.Model.createImplicit({
+                        idProperty: "devicefile",
+                        fields: [
+                            { name: "devicefile", type: "string" },
+                            { name: "description", type: "string" }
+                        ]
+                    }),
+                    proxy: {
+                        type: "rpc",
+                        appendSortParams: false,
+                        rpcData: {
+                            service: "LuksMgmt",
+                            method: "getContainerCandidates"
+                        }
+                    },
+                    sorters: [{
+                        direction: "ASC",
+                        property: "devicefile"
+                    }]
+                }),
+                displayField: "description",
+                valueField: "devicefile",
+                allowBlank: false,
+                editable: false,
+                triggerAction: "all"
+            },{
+                xtype: "combo",
+                name: "cipher",
+                fieldLabel: _("Cipher"),
+                valueField: "value",
+                queryMode: "local",
+                store: Ext.create("Ext.data.ArrayStore", {
+                    fields: [ "value", "text" ],
+                    data: [
+                        [ "aes-xts-plain64", ("aes-xts-plain64 (default)") ],
+                        [ "aes-cbc-essiv:sha256", ("aes-cbc-essiv:sha256") ],
                     ]
                 }),
-                proxy: {
-                    type: "rpc",
-                    appendSortParams: false,
-                    rpcData: {
-                        service: "LuksMgmt",
-                        method: "getContainerCandidates"
-                    }
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
                 },
-                sorters: [{
-                    direction: "ASC",
-                    property: "devicefile"
-                }]
-            }),
-            displayField: "description",
-            valueField: "devicefile",
-            allowBlank: false,
-            editable: false,
-            triggerAction: "all"
+                value: "aes-xts-plain64"
+            },{
+                xtype: "textfield",
+                name: "lukslabel",
+                fieldLabel: _("Label"),
+                autoComplete: false,
+                vtype: "lukslabel",
+                allowBlank: true,
+                triggerAction: "all",
+                listeners: {
+                    scope: me,
+                    specialkey: me.submitOnEnter
+                }
+            }]
         },{
             xtype: "fieldset",
             title: _("Enter a passphrase or upload a key file"),
@@ -1330,6 +1376,13 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
             }
         },{
             xtype: "textcolumn",
+            text: _("LUKS Label"),
+            hidden: true,
+            sortable: true,
+            dataIndex: "lukslabel",
+            stateId: "lukslabel"
+        },{
+            xtype: "textcolumn",
             text: _("Version"),
             hidden: true,
             sortable: true,
@@ -1374,7 +1427,9 @@ Ext.define("OMV.module.admin.storage.luks.Containers", {
                         { name: "size", type: "string" },
                         { name: "unlocked", type: "boolean" },
                         { name: "decrypteddevicefile", type: "string" },
-                        { name: "_used", type: "boolean" }
+                        { name: "_used", type: "boolean" },
+                        { name: "luksversion", type: "string" },
+                        { name: "lukslabel", type: "string" }
                     ]
                 }),
                 proxy: {

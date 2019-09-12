@@ -83,7 +83,8 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
                 "unlocked"              => $luks->isOpen(),
                 "decrypteddevicefile"   => $luks->getDecryptedDeviceFile(),
                 "usedslots"             => $luks->getUsedKeySlots(),
-                "luksversion"           => $luks->getLuksVersion()
+                "luksversion"           => $luks->getLuksVersion(),
+                "lukslabel"             => $luks->getLuksLabel()
             ];
         }
         return $result;
@@ -388,6 +389,8 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             throw new \OMV\Exception($cmd . implode("\n", $output));
         }
         // Create the container.
+        $cipher = $params['cipher'];
+        $label = $params['lukslabel'];
         $luks = new \OMV\System\Storage\Luks\Container($sd->getDeviceFile());
         if(isset($params['keyfile']) && !empty($params['keyfile'])) {
             $key = $params['keyfile'];
@@ -397,7 +400,7 @@ class OMVRpcServiceLuksMgmt extends \OMV\Rpc\ServiceAbstract {
             $keyIsFile = FALSE;
         }
         try {
-            $luks->create($key, $keyIsFile);
+            $luks->create($key, $keyIsFile, $cipher, $label);
         } catch(Exception $e) {
             throw new \OMV\Exception(sprintf(gettext("Unable to create encrypted device: %s"),
                 $e->getMessage()));

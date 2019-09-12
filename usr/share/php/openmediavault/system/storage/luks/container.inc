@@ -121,7 +121,8 @@ class Container extends \OMV\System\Storage\StorageDevice {
         $this->freeKeySlots           = 8;
         $this->deviceMapperDeviceFile = "";
         $this->deviceMapperName       = "";
-        $this->getLuksVersion         = "";
+        $this->LuksVersion            = "";
+        $this->LuksLabel              = "";
 
         // Look up the UUID for the LUKS container
         $cmd = sprintf("cryptsetup luksUUID %s", $this->getDeviceFile());
@@ -163,8 +164,24 @@ class Container extends \OMV\System\Storage\StorageDevice {
         $this->headerInfo = $output;
 
         $version = explode(':',preg_replace('/\s/','',implode('', preg_grep("/^Version:/", $this->headerInfo))))[1];
-        
         $this->luksVersion = $version;
+        
+        switch ($version) {
+            case 2:
+                $label_line = implode( preg_grep( "/^Label:/", $this->headerInfo ) );
+                $label = preg_replace( '/^\s+/', '' , explode( ':' , $label_line )[1] );
+                if ("(no label)" == $label)  {
+                    $this->luksLabel = "";
+                } else {
+                    $this->luksLabel = $label;
+                }
+                break;
+            default:
+                $this->luksLabel = "n/a";
+                break;
+        }
+
+
         if ($version == "1") {
             $this->usedKeySlots = count(preg_grep("/^Key Slot \d: ENABLED$/",
                                                  $this->headerInfo));
@@ -282,6 +299,16 @@ class Container extends \OMV\System\Storage\StorageDevice {
     }
 
     /**
+     * Label of luks container.
+     * @return label string of luks.
+     */
+    public function getLuksLabel() {
+        if ($this->getData() === FALSE)
+            return FALSE;
+        return $this->luksLabel;
+    }
+
+    /**
      * How many key slots are unused.
      * @return Number of free key slots, FALSE on failure.
      */
@@ -364,16 +391,22 @@ class Container extends \OMV\System\Storage\StorageDevice {
      *                  is a passphrase (FALSE, in which case key is a string),
      *                  or a key file (TRUE, in which case key is a filepath to
      *                  the key file). Defaults to FALSE.
+     * @param cipher Method of encryption to be used when formatting the device
+     * @param label Optional. String to tag the block device
      * @return TRUE if successful, otherwise FALSE.
      */
-    public function create($key, $keyIsFile=FALSE) {
+    public function create($key, $keyIsFile=FALSE, $cipher, $label) {
         if (TRUE === $keyIsFile) {
-            $cmd = sprintf("cryptsetup luksFormat -q %s %s",
+            $cmd = sprintf("cryptsetup luksFormat --label=%s -c %s -q %s %s",
+                $label,
+                $cipher,
                 escapeshellarg($this->getDeviceFile()),
                 escapeshellarg($key));
         } else {
-            $cmd = sprintf("echo -n %s | cryptsetup luksFormat -q %s",
+            $cmd = sprintf("echo -n %s | cryptsetup luksFormat --label=%s -c %s -q %s",
                 escapeshellarg($key),
+                $label,
+                $cipher,
                 escapeshellarg($this->getDeviceFile()));
         }
         $process = new Process($cmd);
