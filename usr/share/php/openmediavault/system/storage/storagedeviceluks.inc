@@ -101,10 +101,11 @@ class StorageDeviceLuks extends StorageDeviceDM {
      * @return The LUKS container description, FALSE on failure.
      */
     public function getDescription() {
-        return sprintf(gettext("LUKS encrypted container on %s %s[%s, %s]"),
-                        $this->getCanonicalLuksEncryptedDeviceFile(),
-                        ($this->getModel()) ? '('.$this->getModel().') ' : '',
-                        $this->getDeviceFile(),
-                        binary_format($this->getSize()));
+        $model = $this->getModel();
+        return sprintf("LUKS encrypted container on %s %s[%s, %s]",
+            $this->getCanonicalLuksEncryptedDeviceFile(),
+            ($model) ? '('.$model.') ' : '',
+            $this->getDeviceFile(),
+            binary_format($this->getSize()));
     }
 }
